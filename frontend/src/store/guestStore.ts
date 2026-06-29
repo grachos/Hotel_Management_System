@@ -17,7 +17,9 @@ interface GuestReservacion {
   tipo: string;
   habitacion_numero?: string;
   habitacion_tipo?: string;
+  habitacion_amenities?: string;
   cabaña_nombre?: string;
+  cabaña_amenities?: string;
 }
 
 interface GuestState {

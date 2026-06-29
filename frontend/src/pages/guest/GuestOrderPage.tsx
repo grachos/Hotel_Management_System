@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { guestApi } from '../../services/api';
 import { useGuestStore } from '../../store/guestStore';
-import { UtensilsCrossed, Wine, ShoppingBag, Plus, Minus, ShoppingCart, Loader2, CheckCircle, Clock } from 'lucide-react';
+import { UtensilsCrossed, Wine, ShoppingBag, Plus, Minus, ShoppingCart, Loader2, CheckCircle, Clock, Search } from 'lucide-react';
 import { cn, formatCurrency } from '../../utils/helpers';
 
 const tabs = [
@@ -28,6 +28,17 @@ export default function GuestOrderPage() {
   const [success, setSuccess] = useState('');
   const [pedidos, setPedidos] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredProductos = useMemo(() => {
+    if (!searchQuery.trim()) return productos;
+    const q = searchQuery.toLowerCase();
+    return productos.filter((p) =>
+      p.nombre.toLowerCase().includes(q) ||
+      (p.descripcion && p.descripcion.toLowerCase().includes(q)) ||
+      (p.categoria_nombre && p.categoria_nombre.toLowerCase().includes(q))
+    );
+  }, [productos, searchQuery]);
 
   useEffect(() => {
     loadProductos();
@@ -186,13 +197,24 @@ export default function GuestOrderPage() {
             ))}
           </div>
 
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar productos..."
+              className="input pl-9"
+            />
+          </div>
+
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 size={24} className="animate-spin text-brand-600" />
             </div>
           ) : (
             <div className="grid gap-3">
-              {productos.map((producto) => (
+              {filteredProductos.map((producto) => (
                 <div key={producto.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-4 flex items-center justify-between shadow-sm">
                   <div className="flex-1 min-w-0 mr-3">
                     <p className="font-medium text-slate-800 dark:text-slate-100 text-sm">{producto.nombre}</p>
@@ -230,8 +252,10 @@ export default function GuestOrderPage() {
                   </div>
                 </div>
               ))}
-              {productos.length === 0 && (
-                <p className="text-sm text-slate-400 text-center py-8">No hay productos disponibles en {modulo}</p>
+              {filteredProductos.length === 0 && (
+                <p className="text-sm text-slate-400 text-center py-8">
+                  {searchQuery ? 'No se encontraron productos con ese nombre' : `No hay productos disponibles en ${modulo}`}
+                </p>
               )}
             </div>
           )}

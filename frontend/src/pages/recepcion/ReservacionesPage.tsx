@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { reservacionesApi } from '../../services/api';
-import { Reservacion } from '../../types';
+import { reservacionesApi, habitacionesApi } from '../../services/api';
+import { Reservacion, Habitacion, Cabaña } from '../../types';
 import { Badge } from '../../components/ui/Badge';
 import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
@@ -26,6 +26,8 @@ export default function ReservacionesPage() {
   const [showNueva, setShowNueva] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [habitaciones, setHabitaciones] = useState<Habitacion[]>([]);
+  const [cabanias, setCabanias] = useState<Cabaña[]>([]);
   const [editForm, setEditForm] = useState({
     tipo: 'Pernocte' as 'Pernocte' | 'Pasadia',
     habitacion_id: '' as number | '',
@@ -39,7 +41,30 @@ export default function ReservacionesPage() {
 
   useEffect(() => {
     loadReservaciones();
-  }, []);
+  }, [filtro]);
+
+  const loadHabitacionesEdit = async () => {
+    try {
+      const [habRes, cabRes] = await Promise.all([
+        habitacionesApi.listar({ estado: ['Disponible', 'Limpieza'] }),
+        habitacionesApi.listarCabanias({ estado: ['Disponible', 'Limpieza'] }),
+      ]);
+      let habs = habRes.data.data || [];
+      let cabs = cabRes.data.data || [];
+      if (selected?.habitacion_id && !habs.find((h: any) => h.id === selected.habitacion_id)) {
+        const { data } = await habitacionesApi.listar({ estado: ['Reservada', 'Ocupada'] });
+        const current = (data.data || []).find((h: any) => h.id === selected.habitacion_id);
+        if (current) habs = [...habs, current];
+      }
+      if (selected?.cabaña_id && !cabs.find((c: any) => c.id === selected.cabaña_id)) {
+        const { data } = await habitacionesApi.listarCabanias({ estado: ['Reservada', 'Ocupada'] });
+        const current = (data.data || []).find((c: any) => c.id === selected.cabaña_id);
+        if (current) cabs = [...cabs, current];
+      }
+      setHabitaciones(habs);
+      setCabanias(cabs);
+    } catch (err) { console.error(err); }
+  };
 
   const loadReservaciones = async () => {
     try {
@@ -278,6 +303,7 @@ export default function ReservacionesPage() {
                     niños: selected.niños,
                     notas: selected.notas || '',
                   });
+                  loadHabitacionesEdit();
                   setEditMode(true);
                 }} className="btn-secondary">
                   <Pencil size={18} /> Editar
@@ -311,8 +337,10 @@ export default function ReservacionesPage() {
                 <select className="input" value={editForm.habitacion_id}
                   onChange={(e) => setEditForm({...editForm, habitacion_id: Number(e.target.value) || '', cabaña_id: ''})}>
                   <option value="">Sin habitación</option>
-                  {[101, 102, 103, 201, 202, 301].map((n) => (
-                    <option key={n} value={n}>{n}</option>
+                  {habitaciones.map((h) => (
+                    <option key={h.id} value={h.id}>
+                      {h.numero} - {h.tipo} (S/.{Number(h.precio_noche).toFixed(2)})
+                    </option>
                   ))}
                 </select>
               </div>
@@ -321,8 +349,10 @@ export default function ReservacionesPage() {
                 <select className="input" value={editForm.cabaña_id}
                   onChange={(e) => setEditForm({...editForm, cabaña_id: Number(e.target.value) || '', habitacion_id: ''})}>
                   <option value="">Sin cabaña</option>
-                  {[1, 2, 3].map((n) => (
-                    <option key={n} value={n}>Cabaña {n}</option>
+                  {cabanias.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre} - Cap. {c.capacidad} (S/.{Number(c.precio_noche).toFixed(2)})
+                    </option>
                   ))}
                 </select>
               </div>

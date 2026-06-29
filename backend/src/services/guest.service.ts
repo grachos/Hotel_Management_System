@@ -8,7 +8,8 @@ export class GuestService {
 
     const reservacion = await querySingle(
       `SELECT r.*, ha.numero as habitacion_numero, ha.tipo as habitacion_tipo,
-              c.nombre as cabaña_nombre
+              ha.amenities as habitacion_amenities,
+              c.nombre as cabaña_nombre, c.amenities as cabaña_amenities
        FROM reservaciones r
        LEFT JOIN habitaciones ha ON r.habitacion_id = ha.id
        LEFT JOIN cabañas c ON r.cabaña_id = c.id

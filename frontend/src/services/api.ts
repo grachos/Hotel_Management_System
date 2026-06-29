@@ -110,6 +110,12 @@ export const guestApi = {
   consumos: () => api.get('/guest/consumos'),
 };
 
+export const configApi = {
+  getAll: () => api.get('/config'),
+  update: (entries: { clave: string; valor: string }[]) => api.put('/config', { entries }),
+  hotelInfo: () => api.get('/config/hotel-info'),
+};
+
 export const opinionesApi = {
   listar: (params?: any) => api.get('/opiniones', { params }),
   obtener: (id: number) => api.get(`/opiniones/${id}`),

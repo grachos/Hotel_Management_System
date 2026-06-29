@@ -11,7 +11,8 @@ export class AuthService {
       `SELECT r.*, h.nombre as huesped_nombre, h.apellidos as huesped_apellidos,
               h.email as huesped_email, h.telefono as huesped_telefono,
               ha.numero as habitacion_numero, ha.tipo as habitacion_tipo,
-              c.nombre as cabaña_nombre
+              ha.amenities as habitacion_amenities,
+              c.nombre as cabaña_nombre, c.amenities as cabaña_amenities
        FROM reservaciones r
        JOIN huespedes h ON r.huesped_id = h.id
        LEFT JOIN habitaciones ha ON r.habitacion_id = ha.id
