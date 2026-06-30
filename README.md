@@ -4,7 +4,10 @@ Sistema integral de gestión hotelera con módulos de recepción, reservaciones,
 
 ## Capturas
 
-*(Agregar capturas de pantalla aquí)*
+<img width="1851" height="825" alt="Untitled" src="https://github.com/user-attachments/assets/773335b3-4cf2-45e4-a098-d2153f2dc7da" />
+<img width="1859" height="835" alt="Untitled" src="https://github.com/user-attachments/assets/079640cb-ad11-45f6-96a1-d87aa93b105c" />
+
+
 
 ## Características
 
