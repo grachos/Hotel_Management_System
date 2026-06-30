@@ -48,6 +48,15 @@ export class PedidosController {
       next(error);
     }
   }
+
+  async ocupados(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await pedidosService.listarOcupados();
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const pedidosController = new PedidosController();

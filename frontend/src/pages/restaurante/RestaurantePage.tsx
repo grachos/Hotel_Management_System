@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { inventarioApi, pedidosApi } from '../../services/api';
+import { inventarioApi, pedidosApi, configApi } from '../../services/api';
 import { Producto, Pedido } from '../../types';
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { formatCurrency, formatDateTime } from '../../utils/helpers';
-import { Plus, Minus, ShoppingCart, ChefHat, Search, ClipboardList, UtensilsCrossed } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, ChefHat, Search, ClipboardList, UtensilsCrossed, Building, Home, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function RestaurantePage() {
@@ -20,10 +20,23 @@ export default function RestaurantePage() {
   const [search, setSearch] = useState('');
   const [tipoEntrega, setTipoEntrega] = useState('Local');
   const [mesa, setMesa] = useState('');
+  const [ocupados, setOcupados] = useState<any[]>([]);
+  const [alojamientoId, setAlojamientoId] = useState<number | ''>('');
+  const [recargoDelivery, setRecargoDelivery] = useState(0);
+  const [loadingOcupados, setLoadingOcupados] = useState(false);
 
   useEffect(() => {
     loadData();
   }, [categoriaId]);
+
+  useEffect(() => {
+    if (tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') {
+      loadOcupados();
+    } else {
+      setOcupados([]);
+      setAlojamientoId('');
+    }
+  }, [tipoEntrega]);
 
   const loadData = async () => {
     try {
@@ -35,11 +48,23 @@ export default function RestaurantePage() {
       setProductos(prodRes.data.data);
       setPedidosActivos(pedRes.data.data);
       setCategorias(catRes.data.data.filter((c: any) => c.modulo === 'Restaurante' || c.modulo === 'Todos'));
+      const { data: cfg } = await configApi.getAll();
+      const recargo = cfg.data.find((c: any) => c.clave === 'delivery.recargo');
+      if (recargo) setRecargoDelivery(parseFloat(recargo.valor || '0'));
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadOcupados = async () => {
+    setLoadingOcupados(true);
+    try {
+      const { data } = await pedidosApi.ocupados();
+      setOcupados(data.data || []);
+    } catch (err) { console.error(err); }
+    finally { setLoadingOcupados(false); }
   };
 
   const addToCart = (producto: Producto) => {
@@ -61,15 +86,21 @@ export default function RestaurantePage() {
   const handleSubmitOrder = async () => {
     if (!cart.length) return;
     try {
-      await pedidosApi.crear({
+      const payload: any = {
         modulo: 'Restaurante',
         tipo_entrega: tipoEntrega,
-        mesa: mesa || undefined,
+        mesa: (tipoEntrega === 'Local' && mesa) ? mesa : undefined,
+        recargo_delivery: (tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') ? recargoDelivery : 0,
         productos: cart.map((c) => ({ producto_id: c.producto.id, cantidad: c.cantidad, precio_unitario: c.producto.precio_venta })),
-      });
+      };
+      if ((tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') && alojamientoId) {
+        payload.alojamiento_id = alojamientoId;
+      }
+      await pedidosApi.crear(payload);
       toast.success('Pedido creado exitosamente');
       setCart([]);
       setShowCart(false);
+      setAlojamientoId('');
       loadData();
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Error al crear pedido');
@@ -169,8 +200,8 @@ export default function RestaurantePage() {
 
       <Modal isOpen={showCart} onClose={() => setShowCart(false)} title="Nuevo Pedido - Restaurante" size="lg">
         <div className="space-y-4">
-          <div className="flex gap-4">
-            <div className="flex-1">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
               <label className="label">Tipo de Entrega</label>
               <select className="input" value={tipoEntrega} onChange={(e) => setTipoEntrega(e.target.value)}>
                 <option value="Local">En Local</option>
@@ -179,11 +210,43 @@ export default function RestaurantePage() {
                 <option value="ParaLlevar">Para Llevar</option>
               </select>
             </div>
-            <div className="flex-1">
-              <label className="label">Mesa #</label>
-              <input className="input" value={mesa} onChange={(e) => setMesa(e.target.value)} placeholder="Ej: 5" />
-            </div>
+            {tipoEntrega === 'Local' && (
+              <div>
+                <label className="label">Mesa #</label>
+                <input className="input" value={mesa} onChange={(e) => setMesa(e.target.value)} placeholder="Ej: 5" />
+              </div>
+            )}
           </div>
+
+          {(tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') && (
+            <div className="grid grid-cols-2 gap-4 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-xl border border-blue-200 dark:border-blue-800">
+              <div>
+                <label className="label">
+                  {tipoEntrega === 'Habitación' ? <><Building size={14} className="inline mr-1" /> Habitación</> : <><Home size={14} className="inline mr-1" /> Cabaña</>}
+                </label>
+                {loadingOcupados ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-400"><Loader2 size={14} className="animate-spin" /> Cargando...</div>
+                ) : (
+                  <select className="input" value={alojamientoId}
+                    onChange={(e) => setAlojamientoId(Number(e.target.value) || '')}>
+                    <option value="">Seleccionar {tipoEntrega === 'Habitación' ? 'habitación' : 'cabaña'} ocupada</option>
+                    {ocupados
+                      .filter((o) => o.tipo_alojamiento === (tipoEntrega === 'Habitación' ? 'Habitación' : 'Cabaña'))
+                      .map((o) => (
+                        <option key={o.alojamiento_id} value={o.alojamiento_id}>
+                          {o.numero || o.nombre} - {o.huesped_nombre}
+                        </option>
+                      ))}
+                  </select>
+                )}
+              </div>
+              <div>
+                <label className="label">Recargo Delivery (S/.)</label>
+                <input className="input" type="number" step="0.5" min="0" value={recargoDelivery} readOnly tabIndex={-1} />
+                <p className="text-xs text-slate-400 mt-1">Configurado en Administración</p>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {cart.map((c) => (
@@ -205,10 +268,12 @@ export default function RestaurantePage() {
 
           <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">
             <div>
-              <p className="text-sm text-slate-500">Total</p>
-              <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{formatCurrency(totalCart)}</p>
+              <p className="text-sm text-slate-500">
+                Total{recargoDelivery > 0 ? ` (inc. S/.${recargoDelivery.toFixed(2)} delivery)` : ''}
+              </p>
+              <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{formatCurrency(totalCart + recargoDelivery)}</p>
             </div>
-            <button onClick={handleSubmitOrder} disabled={!cart.length} className="btn-primary py-3 px-6 shadow-md">
+            <button onClick={handleSubmitOrder} disabled={!cart.length || ((tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') && !alojamientoId)} className="btn-primary py-3 px-6 shadow-md">
               <ChefHat size={18} /> Confirmar Pedido
             </button>
           </div>
@@ -233,7 +298,10 @@ export default function RestaurantePage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-500">{pedido.huesped_nombre || 'Anónimo'}</p>
-                  <p className="text-xs text-slate-400">{pedido.mesa ? `Mesa ${pedido.mesa}` : pedido.tipo_entrega}</p>
+                  <p className="text-xs text-slate-400">
+                    {pedido.mesa ? `Mesa ${pedido.mesa}` : pedido.tipo_entrega}
+                    {(pedido.recargo_delivery ?? 0) > 0 && ` · Delivery S/.${Number(pedido.recargo_delivery || 0).toFixed(2)}`}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   {pedido.estado === 'Pendiente' && (

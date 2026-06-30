@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { guestApi } from '../../services/api';
 import { useGuestStore } from '../../store/guestStore';
-import { UtensilsCrossed, Wine, ShoppingBag, Plus, Minus, ShoppingCart, Loader2, CheckCircle, Clock, Search } from 'lucide-react';
+import { UtensilsCrossed, Wine, ShoppingBag, Plus, Minus, ShoppingCart, Loader2, CheckCircle, Clock, Search, Store, Hotel } from 'lucide-react';
 import { cn, formatCurrency } from '../../utils/helpers';
 
 const tabs = [
@@ -29,6 +29,14 @@ export default function GuestOrderPage() {
   const [pedidos, setPedidos] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [tipoEntrega, setTipoEntrega] = useState<'Local' | 'Habitación'>('Local');
+  const [recargoDelivery, setRecargoDelivery] = useState(0);
+
+  useEffect(() => {
+    guestApi.config().then(({ data }) => {
+      setRecargoDelivery(parseFloat(data.data?.['delivery.recargo'] || '0'));
+    }).catch(() => {});
+  }, []);
 
   const filteredProductos = useMemo(() => {
     if (!searchQuery.trim()) return productos;
@@ -97,13 +105,16 @@ export default function GuestOrderPage() {
   const cartTotal = cart.reduce((sum, item) => sum + item.cantidad * item.precio_unitario, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.cantidad, 0);
 
+  const isDelivery = tipoEntrega === 'Habitación';
+  const totalConRecargo = cartTotal + (isDelivery ? recargoDelivery : 0);
+
   const submitOrder = async () => {
     if (!cart.length || !reservacion) return;
     setSubmitting(true);
     try {
       await guestApi.crearPedido({
         modulo,
-        tipo_entrega: 'Habitación',
+        tipo_entrega: tipoEntrega,
         productos: cart.map((item) => ({
           producto_id: item.producto_id,
           cantidad: item.cantidad,
@@ -264,11 +275,23 @@ export default function GuestOrderPage() {
 
       {cartOpen && cart.length > 0 && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setCartOpen(false)}>
-          <div className="w-full bg-white dark:bg-slate-800 rounded-t-2xl p-5 max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full bg-white dark:bg-slate-800 rounded-t-2xl p-5 max-h-[75vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-slate-800 dark:text-slate-100">Tu Pedido</h2>
               <button onClick={() => setCartOpen(false)} className="text-sm text-slate-400">Cerrar</button>
             </div>
+
+            <div className="flex gap-2 mb-4 p-1 bg-slate-100 dark:bg-slate-700 rounded-xl">
+              <button onClick={() => setTipoEntrega('Local')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all ${tipoEntrega === 'Local' ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500'}`}>
+                <Store size={16} /> Recoger
+              </button>
+              <button onClick={() => setTipoEntrega('Habitación')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all ${tipoEntrega === 'Habitación' ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500'}`}>
+                <Hotel size={16} /> Delivery
+              </button>
+            </div>
+
             <div className="space-y-3 mb-4">
               {cart.map((item) => (
                 <div key={item.producto_id} className="flex items-center justify-between">
@@ -288,12 +311,21 @@ export default function GuestOrderPage() {
                 </div>
               ))}
             </div>
-            <div className="border-t border-slate-200 dark:border-slate-700 pt-3 mb-4">
-              <div className="flex items-center justify-between text-lg font-bold text-slate-800 dark:text-slate-100">
-                <span>Total</span>
+            <div className="border-t border-slate-200 dark:border-slate-700 pt-3 mb-4 space-y-1">
+              <div className="flex items-center justify-between text-sm text-slate-500">
+                <span>Subtotal</span>
                 <span>{formatCurrency(cartTotal)}</span>
               </div>
-              <p className="text-xs text-slate-400 text-right">Incluye IGV</p>
+              {isDelivery && recargoDelivery > 0 && (
+                <div className="flex items-center justify-between text-sm text-slate-500">
+                  <span>Recargo delivery</span>
+                  <span>+ {formatCurrency(recargoDelivery)}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between text-lg font-bold text-slate-800 dark:text-slate-100 pt-1 border-t border-slate-100 dark:border-slate-700">
+                <span>Total</span>
+                <span>{formatCurrency(totalConRecargo)}</span>
+              </div>
             </div>
             <button
               onClick={submitOrder}

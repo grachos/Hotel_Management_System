@@ -11,5 +11,6 @@ router.get('/productos', guestController.productos.bind(guestController));
 router.get('/pedidos', guestController.pedidos.bind(guestController));
 router.post('/pedidos', guestController.crearPedido.bind(guestController));
 router.get('/consumos', guestController.consumos.bind(guestController));
+router.get('/config', guestController.config.bind(guestController));
 
 export default router;

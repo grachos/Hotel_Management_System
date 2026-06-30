@@ -19,7 +19,10 @@ export class ConfigService {
 
   async updateMany(entries: { clave: string; valor: string }[]): Promise<void> {
     for (const entry of entries) {
-      await query('UPDATE configuracion SET valor = ? WHERE clave = ?', [entry.valor, entry.clave]);
+      await query(
+        'INSERT INTO configuracion (clave, valor, descripcion) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)',
+        [entry.clave, entry.valor, entry.clave]
+      );
     }
   }
 

@@ -52,6 +52,15 @@ export class GuestController {
       next(error);
     }
   }
+
+  async config(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await guestService.configPublica();
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const guestController = new GuestController();

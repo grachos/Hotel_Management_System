@@ -78,12 +78,14 @@ export class ReservacionesService {
     const fecha_entrada = data.fecha_entrada;
     const fecha_salida = tipo === 'Pasadia' ? data.fecha_entrada : data.fecha_salida;
 
+    const incluye_comidas = data.incluye_comidas ? 1 : 0;
+
     const result = await query(
-      `INSERT INTO reservaciones (huesped_id, habitacion_id, cabaña_id, tipo, fecha_entrada, fecha_salida, adultos, niños, estado, codigo_unico, notas, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente', ?, ?, ?)`,
+      `INSERT INTO reservaciones (huesped_id, habitacion_id, cabaña_id, tipo, fecha_entrada, fecha_salida, adultos, niños, estado, codigo_unico, notas, incluye_comidas, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pendiente', ?, ?, ?, ?)`,
       [data.huesped_id, data.habitacion_id || null, data.cabaña_id || null,
        tipo, fecha_entrada, fecha_salida, data.adultos || 1, data.niños || 0,
-       codigo_unico, data.notas || null, data.created_by || null]
+       codigo_unico, data.notas || null, incluye_comidas, data.created_by || null]
     );
 
     const reservacionId = (result as any).insertId;
@@ -251,16 +253,20 @@ export class ReservacionesService {
         ['Reservada', nuevaCabania]);
     }
 
+    const incluye_comidas = data.incluye_comidas !== undefined ? (data.incluye_comidas ? 1 : 0) : reservacion.incluye_comidas;
+
     await query(
       `UPDATE reservaciones SET
         tipo = ?, habitacion_id = ?, cabaña_id = ?,
         fecha_entrada = ?, fecha_salida = ?,
-        adultos = ?, niños = ?, notas = ?
+        adultos = ?, niños = ?, notas = ?,
+        incluye_comidas = ?
        WHERE id = ?`,
       [tipo, nuevaHabitacion || null, nuevaCabania || null,
        fecha_entrada, fecha_salida,
        data.adultos ?? reservacion.adultos, data.niños ?? reservacion.niños,
-       data.notas !== undefined ? data.notas : reservacion.notas, id]
+       data.notas !== undefined ? data.notas : reservacion.notas,
+       incluye_comidas, id]
     );
 
     if (data.acompanantes && Array.isArray(data.acompanantes)) {

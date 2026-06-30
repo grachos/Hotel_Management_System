@@ -8,6 +8,7 @@ router.use(authenticate);
 
 router.get('/', pedidosController.listar.bind(pedidosController));
 router.get('/activos', pedidosController.activos.bind(pedidosController));
+router.get('/ocupados', pedidosController.ocupados.bind(pedidosController));
 router.get('/:id', pedidosController.obtener.bind(pedidosController));
 router.post('/', authorize('pedidos.crear'), pedidosController.crear.bind(pedidosController));
 router.put('/:id/estado', authorize('pedidos.editar'), pedidosController.actualizarEstado.bind(pedidosController));

@@ -18,10 +18,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+let redirecting401 = false;
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !redirecting401) {
+      redirecting401 = true;
       const isGuest = !!localStorage.getItem('guest_token');
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
@@ -43,6 +45,12 @@ export const authApi = {
   verify: () => api.get('/auth/verify'),
   changePassword: (currentPassword: string, newPassword: string) =>
     api.put('/auth/password', { currentPassword, newPassword }),
+  updateProfile: (data: any) => api.put('/auth/profile', data),
+  forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (token: string, password: string) => api.post('/auth/reset-password', { token, password }),
+  listarUsuarios: () => api.get('/auth/usuarios'),
+  crearUsuario: (data: any) => api.post('/auth/usuarios', data),
+  actualizarUsuario: (id: number, data: any) => api.put(`/auth/usuarios/${id}`, data),
 };
 
 export const huespedesApi = {
@@ -87,6 +95,7 @@ export const pedidosApi = {
   crear: (data: any) => api.post('/pedidos', data),
   actualizarEstado: (id: number, estado: string) => api.put(`/pedidos/${id}/estado`, { estado }),
   activos: (modulo?: string) => api.get('/pedidos/activos', { params: { modulo } }),
+  ocupados: () => api.get('/pedidos/ocupados'),
 };
 
 export const habitacionesApi = {
@@ -108,12 +117,20 @@ export const guestApi = {
   pedidos: () => api.get('/guest/pedidos'),
   crearPedido: (data: any) => api.post('/guest/pedidos', data),
   consumos: () => api.get('/guest/consumos'),
+  config: () => api.get('/guest/config'),
 };
 
 export const configApi = {
   getAll: () => api.get('/config'),
   update: (entries: { clave: string; valor: string }[]) => api.put('/config', { entries }),
   hotelInfo: () => api.get('/config/hotel-info'),
+};
+
+export const reportsApi = {
+  kpiSummary: () => api.get('/reports/kpi-summary'),
+  salesTrend: (dias: number = 30) => api.get('/reports/sales-trend', { params: { dias } }),
+  topProductos: (limite: number = 10) => api.get('/reports/top-productos', { params: { limite } }),
+  guestDemographics: () => api.get('/reports/guest-demographics'),
 };
 
 export const opinionesApi = {

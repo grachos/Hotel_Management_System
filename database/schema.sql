@@ -46,6 +46,8 @@ CREATE TABLE usuarios (
   telefono      VARCHAR(20),
   role_id       INT NOT NULL,
   avatar        VARCHAR(255),
+  reset_token   VARCHAR(255),
+  reset_token_expires DATETIME,
   activo        TINYINT(1) NOT NULL DEFAULT 1,
   ultimo_acceso TIMESTAMP NULL,
   created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -446,7 +448,7 @@ SELECT 7, id FROM permisos WHERE nombre IN (
 -- Usuario administrador por defecto (password: admin123)
 -- Hash generado con bcryptjs para 'admin123'
 INSERT INTO usuarios (nombre, email, password, role_id) VALUES
-('Administrador', 'admin@hotel.com', '$2a$10$UX/qPgeknasr0hSuMN/BfOlv7bKy2.arYc5lciUrWeq06Nz7ZU8YS', 1);
+('Administrador', 'admin@hotel.com', '$2a$10$9SsVKXNUqwVroWqcoma8XeRfa1hytQzN5jRAAiqqdP1FZxhb51xD2', 1);
 
 -- Configuración por defecto
 INSERT INTO configuracion (clave, valor, descripcion) VALUES

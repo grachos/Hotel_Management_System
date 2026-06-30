@@ -67,19 +67,25 @@ export class GuestService {
 
   async crearPedido(huespedId: number, reservacionId: number, data: any): Promise<any> {
     const reservacion = await querySingle(
-      'SELECT id FROM reservaciones WHERE id = ? AND huesped_id = ? AND estado = ?',
+      'SELECT id, incluye_comidas FROM reservaciones WHERE id = ? AND huesped_id = ? AND estado = ?',
       [reservacionId, huespedId, 'CheckIn']
     );
     if (!reservacion) throw new ValidationError('Reservación no activa');
+    const incluyeComidas = reservacion.incluye_comidas === 1;
 
     if (!data.productos || !data.productos.length) {
       throw new ValidationError('Debe incluir al menos un producto');
     }
 
+    const configRow = await querySingle("SELECT valor FROM configuracion WHERE clave = 'delivery.recargo'");
+    const recargoConfig = parseFloat(configRow?.valor || '0');
+    const isDelivery = data.tipo_entrega === 'Habitación' || data.tipo_entrega === 'Cabaña';
+    const recargoDelivery = isDelivery ? recargoConfig : 0;
+
     const result = await query(
-      `INSERT INTO pedidos (reservacion_id, huesped_id, tipo_entrega, modulo, estado, subtotal, impuesto, total, notas)
-       VALUES (?, ?, ?, 'Pendiente', 0, 0, ?, ?)`,
-      [reservacionId, huespedId, data.tipo_entrega || 'Habitación', data.modulo, data.notas || null]
+      `INSERT INTO pedidos (reservacion_id, huesped_id, tipo_entrega, recargo_delivery, modulo, estado, subtotal, impuesto, total, notas)
+       VALUES (?, ?, ?, ?, ?, 'Pendiente', 0, 0, 0, ?)`,
+      [reservacionId, huespedId, data.tipo_entrega || 'Local', recargoDelivery, data.modulo, data.notas || null]
     );
 
     const pedidoId = (result as any).insertId;
@@ -93,6 +99,8 @@ export class GuestService {
 
       const precio = parseFloat(item.precio_unitario || producto.precio_venta);
       const subtotal = item.cantidad * precio;
+      const precioConsumo = incluyeComidas ? 0 : precio;
+      const subtotalConsumo = item.cantidad * precioConsumo;
 
       await query(
         `INSERT INTO detalle_pedidos (pedido_id, producto_id, cantidad, precio_unitario, subtotal)
@@ -112,7 +120,7 @@ export class GuestService {
       await query(
         `INSERT INTO consumos (reservacion_id, huesped_id, producto_id, pedido_id, cantidad, precio_unitario, subtotal, modulo, tipo_entrega, registrado_por)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [reservacionId, huespedId, item.producto_id, pedidoId, item.cantidad, precio, subtotal, data.modulo, data.tipo_entrega || 'Habitación', 1]
+        [reservacionId, huespedId, item.producto_id, pedidoId, item.cantidad, precioConsumo, subtotalConsumo, data.modulo, data.tipo_entrega || 'Habitación', 1]
       );
     }
 
@@ -123,9 +131,9 @@ export class GuestService {
 
     const subtotalTotal = parseFloat(totals?.subtotal_total || 0);
     const impuesto = Math.round(subtotalTotal * 0.18 * 100) / 100;
-    const total = subtotalTotal + impuesto;
+    const total = subtotalTotal + impuesto + recargoDelivery;
 
-    await query('UPDATE pedidos SET subtotal = ?, impuesto = ?, total = ? WHERE id = ?', [subtotalTotal, impuesto, total, pedidoId]);
+    await query('UPDATE pedidos SET subtotal = ?, impuesto = ?, total = ?, recargo_delivery = ? WHERE id = ?', [subtotalTotal, impuesto, total, recargoDelivery, pedidoId]);
 
     return querySingle(
       `SELECT p.*, u.nombre as atendido_por_nombre
@@ -138,21 +146,36 @@ export class GuestService {
 
   async listarConsumos(reservacionId: number): Promise<any[]> {
     return query(
-      `SELECT c.*, pr.nombre as producto_nombre
+      `SELECT c.*, pr.nombre as producto_nombre, NULL as es_delivery
        FROM consumos c
        JOIN productos pr ON c.producto_id = pr.id
        WHERE c.reservacion_id = ?
-       ORDER BY c.created_at DESC`,
-      [reservacionId]
+       UNION ALL
+       SELECT NULL as id, NULL as reservacion_id, NULL as huesped_id, NULL as producto_id, p.id as pedido_id, 1 as cantidad, p.recargo_delivery as precio_unitario, p.recargo_delivery as subtotal, p.modulo, p.tipo_entrega, NULL as registrado_por, p.created_at, 'Cargo por Delivery' as producto_nombre, 1 as es_delivery
+       FROM pedidos p
+       WHERE p.reservacion_id = ? AND p.estado != 'Cancelado' AND p.recargo_delivery > 0
+       ORDER BY created_at DESC`,
+      [reservacionId, reservacionId]
     );
   }
 
-  async totalConsumos(reservacionId: number): Promise<number> {
-    const result = await querySingle(
-      'SELECT COALESCE(SUM(subtotal), 0) as total FROM consumos WHERE reservacion_id = ?',
-      [reservacionId]
+  async configPublica(): Promise<Record<string, string>> {
+    const rows = await query(
+      "SELECT clave, valor FROM configuracion WHERE clave IN ('delivery.recargo', 'hotel.moneda_codigo')"
     );
-    return parseFloat(result?.total || 0);
+    const result: Record<string, string> = {};
+    for (const row of rows as any[]) {
+      result[row.clave] = row.valor;
+    }
+    return result;
+  }
+
+  async totalConsumos(reservacionId: number): Promise<number> {
+    const [result, deliveryResult] = await Promise.all([
+      querySingle('SELECT COALESCE(SUM(subtotal), 0) as total FROM consumos WHERE reservacion_id = ?', [reservacionId]),
+      querySingle('SELECT COALESCE(SUM(recargo_delivery), 0) as total FROM pedidos WHERE reservacion_id = ? AND estado != \'Cancelado\'', [reservacionId]),
+    ]);
+    return parseFloat(result?.total || 0) + parseFloat(deliveryResult?.total || 0);
   }
 }
 

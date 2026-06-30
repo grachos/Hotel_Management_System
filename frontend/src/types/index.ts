@@ -74,6 +74,7 @@ export interface Reservacion {
   codigo_qr?: string;
   codigo_unico: string;
   notas?: string;
+  incluye_comidas?: number | boolean;
   huesped_nombre?: string;
   huesped_apellidos?: string;
   habitacion_numero?: string;
@@ -120,6 +121,7 @@ export interface Pedido {
   impuesto: number;
   total: number;
   notas?: string;
+  recargo_delivery?: number;
   atendido_por?: number;
   created_at?: string;
   updated_at?: string;

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { inventarioApi, pedidosApi } from '../../services/api';
+import { inventarioApi, pedidosApi, configApi } from '../../services/api';
 import { Producto } from '../../types';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { formatCurrency } from '../../utils/helpers';
-import { Plus, Minus, ShoppingCart, Search, Package } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Search, Package, Building, Home, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function MiniMarketPage() {
@@ -16,8 +16,22 @@ export default function MiniMarketPage() {
   const [search, setSearch] = useState('');
   const [categoriaId, setCategoriaId] = useState<number | null>(null);
   const [categorias, setCategorias] = useState<any[]>([]);
+  const [tipoEntrega, setTipoEntrega] = useState('Local');
+  const [ocupados, setOcupados] = useState<any[]>([]);
+  const [alojamientoId, setAlojamientoId] = useState<number | ''>('');
+  const [recargoDelivery, setRecargoDelivery] = useState(0);
+  const [loadingOcupados, setLoadingOcupados] = useState(false);
 
   useEffect(() => { loadData(); }, [categoriaId]);
+
+  useEffect(() => {
+    if (tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') {
+      loadOcupados();
+    } else {
+      setOcupados([]);
+      setAlojamientoId('');
+    }
+  }, [tipoEntrega]);
 
   const loadData = async () => {
     try {
@@ -27,7 +41,19 @@ export default function MiniMarketPage() {
       ]);
       setProductos(prodRes.data.data);
       setCategorias(catRes.data.data.filter((c: any) => c.modulo === 'MiniMarket' || c.modulo === 'Todos'));
+      const { data: cfg } = await configApi.getAll();
+      const recargo = cfg.data.find((c: any) => c.clave === 'delivery.recargo');
+      if (recargo) setRecargoDelivery(parseFloat(recargo.valor || '0'));
     } finally { setLoading(false); }
+  };
+
+  const loadOcupados = async () => {
+    setLoadingOcupados(true);
+    try {
+      const { data } = await pedidosApi.ocupados();
+      setOcupados(data.data || []);
+    } catch (err) { console.error(err); }
+    finally { setLoadingOcupados(false); }
   };
 
   const addToCart = (producto: Producto) => {
@@ -49,12 +75,20 @@ export default function MiniMarketPage() {
   const handleSubmitOrder = async () => {
     if (!cart.length) return;
     try {
-      await pedidosApi.crear({
-        modulo: 'MiniMarket', tipo_entrega: 'Local',
+      const payload: any = {
+        modulo: 'MiniMarket',
+        tipo_entrega: tipoEntrega,
+        recargo_delivery: (tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') ? recargoDelivery : 0,
         productos: cart.map((c) => ({ producto_id: c.producto.id, cantidad: c.cantidad, precio_unitario: c.producto.precio_venta })),
-      });
+      };
+      if ((tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') && alojamientoId) {
+        payload.alojamiento_id = alojamientoId;
+      }
+      await pedidosApi.crear(payload);
       toast.success('Venta registrada');
-      setCart([]); setShowCart(false); loadData();
+      setCart([]); setShowCart(false);
+      setAlojamientoId('');
+      loadData();
     } catch (err: any) { toast.error(err.response?.data?.error || 'Error'); }
   };
 
@@ -113,6 +147,45 @@ export default function MiniMarketPage() {
 
       <Modal isOpen={showCart} onClose={() => setShowCart(false)} title="Registrar Venta - Mini Market" size="md">
         <div className="space-y-4">
+          <div>
+            <label className="label">Tipo de Entrega</label>
+            <select className="input" value={tipoEntrega} onChange={(e) => setTipoEntrega(e.target.value)}>
+              <option value="Local">En Tienda</option>
+              <option value="Habitación">A la Habitación</option>
+              <option value="Cabaña">A la Cabaña</option>
+            </select>
+          </div>
+
+          {(tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') && (
+            <div className="grid grid-cols-2 gap-4 p-4 bg-cyan-50 dark:bg-cyan-900/10 rounded-xl border border-cyan-200 dark:border-cyan-800">
+              <div>
+                <label className="label">
+                  {tipoEntrega === 'Habitación' ? <><Building size={14} className="inline mr-1" /> Habitación</> : <><Home size={14} className="inline mr-1" /> Cabaña</>}
+                </label>
+                {loadingOcupados ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-400"><Loader2 size={14} className="animate-spin" /> Cargando...</div>
+                ) : (
+                  <select className="input" value={alojamientoId}
+                    onChange={(e) => setAlojamientoId(Number(e.target.value) || '')}>
+                    <option value="">Seleccionar {tipoEntrega === 'Habitación' ? 'habitación' : 'cabaña'} ocupada</option>
+                    {ocupados
+                      .filter((o) => o.tipo_alojamiento === (tipoEntrega === 'Habitación' ? 'Habitación' : 'Cabaña'))
+                      .map((o) => (
+                        <option key={o.alojamiento_id} value={o.alojamiento_id}>
+                          {o.numero || o.nombre} - {o.huesped_nombre}
+                        </option>
+                      ))}
+                  </select>
+                )}
+              </div>
+              <div>
+                <label className="label">Recargo Delivery (S/.)</label>
+                <input className="input" type="number" step="0.5" min="0" value={recargoDelivery} readOnly tabIndex={-1} />
+                <p className="text-xs text-slate-400 mt-1">Configurado en Administración</p>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {cart.map((c) => (
               <div key={c.producto.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
@@ -128,8 +201,15 @@ export default function MiniMarketPage() {
             {!cart.length && <p className="text-sm text-slate-400 text-center py-4">Seleccione productos</p>}
           </div>
           <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-            <p className="text-2xl font-bold">{formatCurrency(totalCart)}</p>
-            <button onClick={handleSubmitOrder} disabled={!cart.length} className="btn-primary py-3 px-6">Cobrar S/. {formatCurrency(totalCart).replace('S/. ', '')}</button>
+            <div>
+              <p className="text-sm text-slate-500">
+                Total{recargoDelivery > 0 ? ` (inc. S/.${recargoDelivery.toFixed(2)} delivery)` : ''}
+              </p>
+              <p className="text-2xl font-bold">{formatCurrency(totalCart + recargoDelivery)}</p>
+            </div>
+            <button onClick={handleSubmitOrder} disabled={!cart.length || ((tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') && !alojamientoId)} className="btn-primary py-3 px-6">
+              Cobrar S/. {formatCurrency(totalCart + recargoDelivery).replace('S/. ', '')}
+            </button>
           </div>
         </div>
       </Modal>

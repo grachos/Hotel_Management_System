@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
-import { configApi } from '../../services/api';
-import { Settings, Users, Shield, Building2, Plus, Sun, Moon, Wifi, Coffee, Clock, MapPin, BedDouble, Loader2, CheckCircle } from 'lucide-react';
+import { Modal } from '../../components/ui/Modal';
+import { configApi, authApi } from '../../services/api';
+import { Settings, Users, Shield, Building2, Plus, Sun, Moon, Wifi, Coffee, Clock, MapPin, BedDouble, Loader2, CheckCircle, Pencil, Power, PowerOff, X } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import HabitacionesManager from './HabitacionesManager';
+import toast from 'react-hot-toast';
 
 export default function AdminPage() {
   const [tab, setTab] = useState<'usuarios' | 'roles' | 'config' | 'habitaciones'>('usuarios');
@@ -35,25 +37,7 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {tab === 'usuarios' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Usuarios del Sistema</CardTitle>
-            <button className="btn-primary text-sm py-1.5 px-3"><Plus size={16} /> Nuevo Usuario</button>
-          </CardHeader>
-          <div className="space-y-3">
-            <div className="flex items-center gap-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600">
-              <div className="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center text-white font-bold">A</div>
-              <div className="flex-1">
-                <p className="font-medium text-slate-800 dark:text-slate-100">Administrador</p>
-                <p className="text-xs text-slate-500">admin@hotel.com</p>
-              </div>
-              <Badge variant="info">Administrador</Badge>
-              <Badge variant="success">Activo</Badge>
-            </div>
-          </div>
-        </Card>
-      )}
+      {tab === 'usuarios' && <UsuariosManager />}
 
       {tab === 'roles' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -80,6 +64,130 @@ export default function AdminPage() {
 
       {tab === 'config' && <ConfigPanel />}
       {tab === 'habitaciones' && <HabitacionesManager />}
+    </div>
+  );
+}
+
+function UsuariosManager() {
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ nombre: '', email: '', password: '', telefono: '', role_id: 2 });
+
+  useEffect(() => { load(); }, []);
+
+  const load = async () => {
+    try {
+      const { data } = await authApi.listarUsuarios();
+      setUsuarios(data.data);
+    } catch {} finally { setLoading(false); }
+  };
+
+  const handleSubmit = async () => {
+    if (!form.nombre || !form.email || !form.password) {
+      toast.error('Nombre, email y contraseña son requeridos');
+      return;
+    }
+    setSaving(true);
+    try {
+      await authApi.crearUsuario(form);
+      toast.success('Usuario creado');
+      setShowModal(false);
+      setForm({ nombre: '', email: '', password: '', telefono: '', role_id: 2 });
+      load();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Error al crear usuario');
+    } finally { setSaving(false); }
+  };
+
+  const toggleActivo = async (user: any) => {
+    try {
+      await authApi.actualizarUsuario(user.id, { activo: !user.activo });
+      toast.success(`Usuario ${user.activo ? 'desactivado' : 'activado'}`);
+      load();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Error');
+    }
+  };
+
+  const roles = [
+    { id: 1, nombre: 'Administrador' },
+    { id: 2, nombre: 'Gerente' },
+    { id: 3, nombre: 'Recepción' },
+    { id: 4, nombre: 'Restaurante' },
+    { id: 5, nombre: 'Bar' },
+    { id: 6, nombre: 'MiniMarket' },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Usuarios del Sistema</CardTitle>
+          <button onClick={() => setShowModal(true)} className="btn-primary text-sm py-1.5 px-3"><Plus size={16} /> Nuevo Usuario</button>
+        </CardHeader>
+        {loading ? (
+          <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-brand-600" /></div>
+        ) : (
+          <div className="space-y-2">
+            {usuarios.map((u) => (
+              <div key={u.id} className="flex items-center gap-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 transition-colors hover:bg-slate-100 dark:hover:bg-slate-600">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0 ${u.activo ? 'bg-brand-600' : 'bg-slate-400'}`}>
+                  {u.nombre.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{u.nombre}</p>
+                  <p className="text-xs text-slate-500 truncate">{u.email}{u.telefono ? ` · ${u.telefono}` : ''}</p>
+                </div>
+                <Badge variant={u.role_name === 'Administrador' ? 'danger' : 'info'}>{u.role_name}</Badge>
+                <Badge variant={u.activo ? 'success' : 'neutral'}>{u.activo ? 'Activo' : 'Inactivo'}</Badge>
+                {u.role_name !== 'Administrador' && (
+                  <button onClick={() => toggleActivo(u)} className="p-2 text-slate-400 hover:text-red-500 transition-colors" title={u.activo ? 'Desactivar' : 'Activar'}>
+                    {u.activo ? <Power size={16} /> : <PowerOff size={16} />}
+                  </button>
+                )}
+              </div>
+            ))}
+            {!usuarios.length && <p className="text-sm text-slate-400 text-center py-4">Sin usuarios registrados</p>}
+          </div>
+        )}
+      </Card>
+
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Nuevo Usuario" size="sm">
+        <div className="space-y-4">
+          <div>
+            <label className="label">Nombre completo</label>
+            <input className="input" value={form.nombre} onChange={(e) => setForm({...form, nombre: e.target.value})} placeholder="Ej: Juan Pérez" />
+          </div>
+          <div>
+            <label className="label">Email</label>
+            <input className="input" type="email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} placeholder="ejemplo@hotel.com" />
+          </div>
+          <div>
+            <label className="label">Contraseña</label>
+            <input className="input" type="password" value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} placeholder="Mín. 6 caracteres" />
+          </div>
+          <div>
+            <label className="label">Teléfono (opcional)</label>
+            <input className="input" value={form.telefono} onChange={(e) => setForm({...form, telefono: e.target.value})} placeholder="+51 999 888 777" />
+          </div>
+          <div>
+            <label className="label">Rol</label>
+            <select className="input" value={form.role_id} onChange={(e) => setForm({...form, role_id: Number(e.target.value)})}>
+              {roles.filter((r) => r.id !== 1).map((r) => (
+                <option key={r.id} value={r.id}>{r.nombre}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button onClick={handleSubmit} disabled={saving} className="btn-primary flex-1 py-2.5">
+              {saving ? <Loader2 size={16} className="animate-spin mx-auto" /> : 'Crear Usuario'}
+            </button>
+            <button onClick={() => setShowModal(false)} className="btn-secondary flex-1 py-2.5">Cancelar</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -152,11 +260,12 @@ function ConfigPanel() {
             <div><label className="label">Impuesto (%)</label><input className="input" type="number" value={configs['hotel.impuesto'] || '0'} onChange={(e) => setVal('hotel.impuesto', e.target.value)} /></div>
             <div><label className="label">Moneda</label>
               <select className="input" value={configs['hotel.moneda_codigo'] || 'PEN'} onChange={(e) => setVal('hotel.moneda_codigo', e.target.value)}>
-                <option value="PEN">S/. (Sol Peruano)</option>
+                <option value="COP">$ (Peso Colombiano)</option>
                 <option value="USD">$ (Dólar)</option>
                 <option value="EUR">€ (Euro)</option>
               </select>
             </div>
+            <div><label className="label">Recargo por Delivery (S/.)</label><input className="input" type="number" step="0.01" value={configs['delivery.recargo'] || '0'} onChange={(e) => setVal('delivery.recargo', e.target.value)} /></div>
             <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg border border-slate-100 dark:border-slate-600">
               <div className="flex items-center gap-3">
                 {isDarkMode ? <Moon size={20} className="text-slate-600" /> : <Sun size={20} className="text-slate-600" />}

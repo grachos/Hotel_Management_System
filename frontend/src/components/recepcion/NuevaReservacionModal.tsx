@@ -39,6 +39,7 @@ export default function NuevaReservacionModal({ isOpen, onClose, onSuccess }: Pr
   const [fechaSalida, setFechaSalida] = useState('');
   const [adultos, setAdultos] = useState(1);
   const [ninos, setNinos] = useState(0);
+  const [incluyeComidas, setIncluyeComidas] = useState(false);
   const [notas, setNotas] = useState('');
   const [acompanantes, setAcompanantes] = useState<AcompananteForm[]>([]);
 
@@ -130,14 +131,15 @@ export default function NuevaReservacionModal({ isOpen, onClose, onSuccess }: Pr
       await reservacionesApi.crear({
         huesped_id: selectedHuesped.id,
         tipo,
-        habitacion_id: selectedHabitacion || null,
-        cabaña_id: selectedCabania || null,
+        habitacion_id: selectedHabitacion || undefined,
+        cabaña_id: selectedCabania || undefined,
         fecha_entrada: fechaEntrada,
         fecha_salida: fechaSalida,
         adultos,
         niños: ninos,
-        notas: notas || null,
-        acompanantes: acompanantes.filter((a) => a.nombre.trim()),
+        incluye_comidas: incluyeComidas,
+        notas: notas || undefined,
+        acompanantes: acompanantes.filter((a) => a.nombre),
       });
       toast.success('Reservación creada exitosamente');
       onSuccess();
@@ -161,6 +163,7 @@ export default function NuevaReservacionModal({ isOpen, onClose, onSuccess }: Pr
     setFechaSalida('');
     setAdultos(1);
     setNinos(0);
+    setIncluyeComidas(false);
     setNotas('');
     setAcompanantes([]);
   };
@@ -348,6 +351,15 @@ export default function NuevaReservacionModal({ isOpen, onClose, onSuccess }: Pr
               ))}
             </div>
           )}
+        </div>
+
+        <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
+          <input type="checkbox" id="incluyeComidas" checked={incluyeComidas}
+            onChange={(e) => setIncluyeComidas(e.target.checked)}
+            className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+          <label htmlFor="incluyeComidas" className="text-sm font-medium text-slate-700 dark:text-slate-200 cursor-pointer">
+            Incluye comidas <span className="text-xs text-slate-400 font-normal">(los pedidos se cargan con valor 0 al huésped)</span>
+          </label>
         </div>
 
         <div>

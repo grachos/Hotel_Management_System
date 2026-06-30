@@ -6,7 +6,7 @@ import { Table } from '../../components/ui/Table';
 import { Modal } from '../../components/ui/Modal';
 import { formatDate, formatDateTime } from '../../utils/helpers';
 import NuevaReservacionModal from '../../components/recepcion/NuevaReservacionModal';
-import { Plus, QrCode, LogIn, LogOut, Eye, Users, Pencil, Loader2 } from 'lucide-react';
+import { Plus, QrCode, LogIn, LogOut, Eye, Users, Pencil, Loader2, Share2, Download, ClipboardCopy } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const estadoBadge: Record<string, string> = {
@@ -36,6 +36,7 @@ export default function ReservacionesPage() {
     fecha_salida: '',
     adultos: 1,
     niños: 0,
+    incluye_comidas: false,
     notas: '',
   });
 
@@ -67,6 +68,7 @@ export default function ReservacionesPage() {
   };
 
   const loadReservaciones = async () => {
+    setLoading(true);
     try {
       const params = filtro ? { estado: filtro } : {};
       const { data } = await reservacionesApi.listar(params);
@@ -104,6 +106,32 @@ export default function ReservacionesPage() {
       setShowQR(data.qr);
     } catch (error) {
       toast.error('Error al generar QR');
+    }
+  };
+
+  const canShare = !!(navigator as any).share;
+  const shareQR = async (action: 'share' | 'download' | 'clipboard') => {
+    if (!showQR) return;
+
+    try {
+      const response = await fetch(showQR);
+      const blob = await response.blob();
+
+      if (action === 'share') {
+        const file = new File([blob], 'reservacion-qr.png', { type: 'image/png' });
+        await (navigator as any).share({ title: 'Código QR de Reservación', files: [file] });
+      } else if (action === 'clipboard') {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        toast.success('QR copiado al portapapeles');
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'reservacion-qr.png';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') toast.error('Error al compartir');
     }
   };
 
@@ -207,7 +235,7 @@ export default function ReservacionesPage() {
         {estados.map((e) => (
           <button
             key={e}
-            onClick={() => { setFiltro(e); setLoading(true); }}
+            onClick={() => setFiltro(e)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               filtro === e
                 ? 'bg-brand-600 text-white shadow-md'
@@ -258,6 +286,10 @@ export default function ReservacionesPage() {
                 <p className="text-slate-700 dark:text-slate-300">{selected.acompanantes_count || 0}</p>
               </div>
               <div>
+                <label className="label">Comidas Incluidas</label>
+                <p className="text-slate-700 dark:text-slate-300">{selected.incluye_comidas ? 'Sí' : 'No'}</p>
+              </div>
+              <div>
                 <label className="label">Fecha de Entrada</label>
                 <p className="text-slate-700 dark:text-slate-300">{formatDate(selected.fecha_entrada)}</p>
               </div>
@@ -301,6 +333,7 @@ export default function ReservacionesPage() {
                     fecha_salida: selected.fecha_salida,
                     adultos: selected.adultos,
                     niños: selected.niños,
+                    incluye_comidas: selected.incluye_comidas === 1 || selected.incluye_comidas === true,
                     notas: selected.notas || '',
                   });
                   loadHabitacionesEdit();
@@ -383,6 +416,14 @@ export default function ReservacionesPage() {
                   onChange={(e) => setEditForm({...editForm, niños: parseInt(e.target.value) || 0})} />
               </div>
             </div>
+            <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600">
+              <input type="checkbox" id="editIncluyeComidas" checked={editForm.incluye_comidas}
+                onChange={(e) => setEditForm({...editForm, incluye_comidas: e.target.checked})}
+                className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
+              <label htmlFor="editIncluyeComidas" className="text-sm font-medium text-slate-700 dark:text-slate-200 cursor-pointer">
+                Incluye comidas <span className="text-xs text-slate-400 font-normal">(pedidos se cargan con valor 0)</span>
+              </label>
+            </div>
             <div>
               <label className="label">Notas</label>
               <textarea className="input" rows={2} value={editForm.notas}
@@ -411,10 +452,23 @@ export default function ReservacionesPage() {
       <Modal isOpen={!!showQR} onClose={() => setShowQR(null)} title="Código QR de Reservación" size="sm">
         {showQR && (
           <div className="text-center">
-            <img src={showQR} alt="QR Code" className="mx-auto w-64 h-64" />
+            <img id="qr-img" src={showQR} alt="QR Code" className="mx-auto w-64 h-64" />
             <p className="text-sm text-slate-500 mt-4">
               Escanea este código para identificar al grupo en pedidos
             </p>
+            <div className="flex justify-center gap-2 mt-4 flex-wrap">
+              {canShare && (
+                <button onClick={() => shareQR('share')} className="btn-primary flex items-center gap-2 text-sm">
+                  <Share2 size={16} /> Compartir
+                </button>
+              )}
+              <button onClick={() => shareQR('download')} className="btn-secondary flex items-center gap-2 text-sm">
+                <Download size={16} /> Descargar
+              </button>
+              <button onClick={() => shareQR('clipboard')} className="btn-secondary flex items-center gap-2 text-sm">
+                <ClipboardCopy size={16} /> Copiar QR
+              </button>
+            </div>
           </div>
         )}
       </Modal>

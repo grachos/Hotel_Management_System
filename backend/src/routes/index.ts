@@ -10,6 +10,7 @@ import webhookRoutes from './webhook.routes';
 import guestRoutes from './guest.routes';
 import opinionesRoutes from './opiniones.routes';
 import configRoutes from './config.routes';
+import reportsRoutes from './reports.routes';
 
 const router = Router();
 
@@ -24,6 +25,7 @@ router.use('/v1', webhookRoutes);
 router.use('/guest', guestRoutes);
 router.use('/opiniones', opinionesRoutes);
 router.use('/config', configRoutes);
+router.use('/reports', reportsRoutes);
 
 router.get('/health', (_req, res) => {
   res.json({ success: true, message: 'API Hotel Gestión - OK', timestamp: new Date().toISOString() });

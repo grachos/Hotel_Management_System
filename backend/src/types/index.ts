@@ -8,6 +8,8 @@ export interface Usuario {
   avatar?: string;
   activo: number;
   ultimo_acceso?: string;
+  reset_token?: string;
+  reset_token_expires?: string;
   created_at: string;
   updated_at: string;
   role_name?: string;

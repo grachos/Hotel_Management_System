@@ -3,6 +3,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useGuestStore } from './store/guestStore';
 import LoginPage from './pages/auth/LoginPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import DashboardLayout from './components/layout/DashboardLayout';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import HuespedesPage from './pages/recepcion/HuespedesPage';
@@ -44,6 +46,8 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/guest" element={<GuestLoginPage />} />
       <Route path="/guest/dashboard" element={
         <GuestPrivateRoute>

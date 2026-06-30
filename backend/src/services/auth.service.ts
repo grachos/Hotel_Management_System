@@ -1,9 +1,11 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { query, querySingle } from '../config/database';
 import { config } from '../config';
 import { AuthPayload, Usuario } from '../types';
-import { UnauthorizedError, ValidationError } from '../utils/errors';
+import { UnauthorizedError, ValidationError, NotFoundError } from '../utils/errors';
+import { sendPasswordResetEmail } from './mailer.service';
 
 export class AuthService {
   async guestLogin(codigo: string): Promise<{ token: string; huesped: any; reservacion: any }> {
@@ -160,6 +162,48 @@ export class AuthService {
     return user;
   }
 
+  async listarUsuarios(): Promise<any[]> {
+    return query(
+      `SELECT u.id, u.nombre, u.email, u.telefono, u.activo, u.ultimo_acceso, u.created_at,
+              r.nombre as role_name, r.id as role_id
+       FROM usuarios u
+       JOIN roles r ON u.role_id = r.id
+       ORDER BY u.created_at DESC`
+    );
+  }
+
+  async crearUsuario(data: { nombre: string; email: string; password: string; role_id: number; telefono?: string }): Promise<any> {
+    const existing = await querySingle('SELECT id FROM usuarios WHERE email = ?', [data.email]);
+    if (existing) throw new ValidationError('El email ya está registrado');
+
+    const role = await querySingle('SELECT id, nombre FROM roles WHERE id = ? AND activo = 1', [data.role_id]);
+    if (!role) throw new ValidationError('Rol no válido');
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const result = await query(
+      'INSERT INTO usuarios (nombre, email, password, telefono, role_id) VALUES (?, ?, ?, ?, ?)',
+      [data.nombre, data.email, hashedPassword, data.telefono || null, data.role_id]
+    );
+
+    return this.getProfile((result as any).insertId);
+  }
+
+  async actualizarUsuario(id: number, data: { nombre?: string; email?: string; activo?: boolean; role_id?: number; telefono?: string }): Promise<any> {
+    const fields: string[] = [];
+    const params: any[] = [];
+
+    if (data.nombre !== undefined) { fields.push('nombre = ?'); params.push(data.nombre); }
+    if (data.email !== undefined) { fields.push('email = ?'); params.push(data.email); }
+    if (data.telefono !== undefined) { fields.push('telefono = ?'); params.push(data.telefono); }
+    if (data.role_id !== undefined) { fields.push('role_id = ?'); params.push(data.role_id); }
+    if (data.activo !== undefined) { fields.push('activo = ?'); params.push(data.activo ? 1 : 0); }
+
+    if (!fields.length) throw new ValidationError('Sin campos para actualizar');
+    params.push(id);
+    await query(`UPDATE usuarios SET ${fields.join(', ')} WHERE id = ?`, params);
+    return this.getProfile(id);
+  }
+
   async changePassword(userId: number, currentPassword: string, newPassword: string): Promise<void> {
     const user = await querySingle(
       'SELECT password FROM usuarios WHERE id = ?',
@@ -177,6 +221,71 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await query('UPDATE usuarios SET password = ? WHERE id = ?', [hashedPassword, userId]);
+  }
+
+  async updateProfile(userId: number, data: { email?: string; currentPassword?: string; newPassword?: string }): Promise<any> {
+    const user = await querySingle('SELECT * FROM usuarios WHERE id = ?', [userId]) as Usuario;
+    if (!user) throw new NotFoundError('Usuario');
+
+    if (data.email && data.email !== user.email) {
+      const existing = await querySingle('SELECT id FROM usuarios WHERE email = ? AND id != ?', [data.email, userId]);
+      if (existing) throw new ValidationError('El email ya está registrado');
+    }
+
+    if (data.currentPassword) {
+      const valid = await bcrypt.compare(data.currentPassword, user.password);
+      if (!valid) throw new ValidationError('Contraseña actual incorrecta');
+    }
+
+    const fields: string[] = [];
+    const params: any[] = [];
+
+    if (data.email && data.email !== user.email) {
+      fields.push('email = ?');
+      params.push(data.email);
+    }
+    if (data.newPassword) {
+      if (!data.currentPassword) throw new ValidationError('Debe proporcionar la contraseña actual');
+      const hashed = await bcrypt.hash(data.newPassword, 10);
+      fields.push('password = ?');
+      params.push(hashed);
+    }
+
+    if (fields.length) {
+      params.push(userId);
+      await query(`UPDATE usuarios SET ${fields.join(', ')} WHERE id = ?`, params);
+    }
+
+    return this.getProfile(userId);
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await querySingle('SELECT id, nombre FROM usuarios WHERE email = ? AND activo = 1', [email]) as Usuario | undefined;
+    if (!user) return;
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 3600000);
+
+    await query('UPDATE usuarios SET reset_token = ?, reset_token_expires = ? WHERE id = ?', [token, expires, user.id]);
+
+    try {
+      await sendPasswordResetEmail(email, token);
+    } catch {
+      await query('UPDATE usuarios SET reset_token = NULL, reset_token_expires = NULL WHERE id = ?', [user.id]);
+      throw new Error('Error al enviar el correo. Verifica la configuración SMTP.');
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const user = await querySingle(
+      'SELECT id FROM usuarios WHERE reset_token = ? AND reset_token_expires > NOW() AND activo = 1',
+      [token]
+    ) as Usuario | undefined;
+
+    if (!user) throw new ValidationError('Token inválido o expirado');
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await query('UPDATE usuarios SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?', [hashed, user.id]);
   }
 }
 

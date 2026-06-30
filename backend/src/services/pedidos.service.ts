@@ -62,13 +62,39 @@ export class PedidosService {
   }
 
   async crear(data: any, userId: number): Promise<any> {
+    let reservacionId = data.reservacion_id || null;
+    let huespedId = data.huesped_id || null;
+
+    // Read delivery recargo from config (overrides frontend value)
+    const configRow = await querySingle("SELECT valor FROM configuracion WHERE clave = 'delivery.recargo'");
+    const recargoConfig = parseFloat(configRow?.valor || '0');
+    const isDelivery = data.tipo_entrega === 'Habitación' || data.tipo_entrega === 'Cabaña';
+    const recargoDelivery = isDelivery ? recargoConfig : 0;
+
+    // If delivery to Habitación or Cabaña, resolve the occupied room/cabin to find the guest
+    if (!reservacionId && isDelivery && data.alojamiento_id) {
+      const columna = data.tipo_entrega === 'Habitación' ? 'habitacion_id' : 'cabaña_id';
+      const ocupada = data.tipo_entrega === 'Habitación' ? 'Ocupada' : 'Ocupada';
+      const reservacion = await querySingle(
+        `SELECT r.id, r.huesped_id, r.incluye_comidas
+         FROM reservaciones r
+         JOIN ${data.tipo_entrega === 'Habitación' ? 'habitaciones' : 'cabañas'} a ON r.${columna} = a.id
+         WHERE a.id = ? AND r.estado = 'CheckIn'`,
+        [data.alojamiento_id]
+      );
+      if (!reservacion) throw new ValidationError('No hay un huésped activo en ese alojamiento');
+      reservacionId = reservacion.id;
+      huespedId = reservacion.huesped_id;
+      data._incluye_comidas = reservacion.incluye_comidas === 1;
+    }
+
     const result = await query(
-      `INSERT INTO pedidos (reservacion_id, huesped_id, mesa, tipo_entrega, modulo, estado, subtotal, impuesto, total, notas, atendido_por)
-       VALUES (?, ?, ?, ?, ?, 'Pendiente', ?, ?, ?, ?, ?)`,
-      [data.reservacion_id || null, data.huesped_id || null, data.mesa || null,
-       data.tipo_entrega || 'Local', data.modulo,
-        data.subtotal || 0, data.impuesto || 0, data.total || 0,
-        data.notas || null, userId]
+      `INSERT INTO pedidos (reservacion_id, huesped_id, mesa, tipo_entrega, recargo_delivery, modulo, estado, subtotal, impuesto, total, notas, atendido_por)
+       VALUES (?, ?, ?, ?, ?, ?, 'Pendiente', ?, ?, ?, ?, ?)`,
+      [reservacionId, huespedId, data.mesa || null,
+       data.tipo_entrega || 'Local', recargoDelivery, data.modulo,
+       data.subtotal || 0, data.impuesto || 0, data.total || 0,
+       data.notas || null, userId]
     );
 
     const pedidoId = (result as any).insertId;
@@ -81,12 +107,19 @@ export class PedidosService {
           throw new ValidationError(`Stock insuficiente para ${producto.nombre}`);
         }
 
-        const subtotal = item.cantidad * parseFloat(item.precio_unitario || producto.precio_venta);
+        const precioUnitario = parseFloat(item.precio_unitario || producto.precio_venta);
+        const subtotal = item.cantidad * precioUnitario;
+
+        // If the reservation includes meals, charge 0 to the guest (free)
+        // but still deduct inventory
+        const precioConsumo = data._incluye_comidas ? 0 : precioUnitario;
+        const subtotalConsumo = item.cantidad * precioConsumo;
+
         await query(
           `INSERT INTO detalle_pedidos (pedido_id, producto_id, cantidad, precio_unitario, subtotal, notas)
            VALUES (?, ?, ?, ?, ?, ?)`,
           [pedidoId, item.producto_id, item.cantidad,
-           item.precio_unitario || producto.precio_venta, subtotal, item.notas || null]
+           precioUnitario, subtotal, item.notas || null]
         );
 
         const stockAnterior = parseFloat(producto.stock_actual);
@@ -99,12 +132,13 @@ export class PedidosService {
           [item.producto_id, item.cantidad, stockAnterior, stockNuevo, pedidoId, userId]
         );
 
-        if (data.huesped_id || data.reservacion_id) {
+        // Register consumption only if linked to a reservation/guest
+        if (reservacionId || huespedId) {
           await query(
             `INSERT INTO consumos (reservacion_id, huesped_id, producto_id, pedido_id, cantidad, precio_unitario, subtotal, modulo, tipo_entrega, registrado_por)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [data.reservacion_id || null, data.huesped_id || null, item.producto_id, pedidoId,
-             item.cantidad, item.precio_unitario || producto.precio_venta, subtotal,
+            [reservacionId, huespedId, item.producto_id, pedidoId,
+             item.cantidad, precioConsumo, subtotalConsumo,
              data.modulo, data.tipo_entrega || 'Local', userId]
           );
         }
@@ -116,8 +150,8 @@ export class PedidosService {
       );
 
       const subtotal = parseFloat(totals?.subtotal_total || 0);
-      const impuesto = subtotal * 0.18;
-      const total = subtotal + impuesto;
+      const impuesto = Math.round(subtotal * 0.18 * 100) / 100;
+      const total = subtotal + impuesto + recargoDelivery;
 
       await query(
         'UPDATE pedidos SET subtotal = ?, impuesto = ?, total = ? WHERE id = ?',
@@ -174,6 +208,30 @@ export class PedidosService {
 
     sql += ' ORDER BY p.created_at ASC';
     return query(sql, params);
+  }
+
+  async listarOcupados(): Promise<any> {
+    const habitaciones = await query(
+      `SELECT a.id as alojamiento_id, a.numero, a.tipo, 'Habitación' as tipo_alojamiento,
+              CONCAT(h.nombre, ' ', h.apellidos) as huesped_nombre, h.id as huesped_id,
+              r.id as reservacion_id
+       FROM habitaciones a
+       JOIN reservaciones r ON r.habitacion_id = a.id AND r.estado = 'CheckIn'
+       JOIN huespedes h ON r.huesped_id = h.id
+       WHERE a.activo = 1 AND a.estado = 'Ocupada'
+       ORDER BY a.numero`
+    );
+    const cabañas = await query(
+      `SELECT a.id as alojamiento_id, a.nombre, NULL as tipo, 'Cabaña' as tipo_alojamiento,
+              CONCAT(h.nombre, ' ', h.apellidos) as huesped_nombre, h.id as huesped_id,
+              r.id as reservacion_id
+       FROM cabañas a
+       JOIN reservaciones r ON r.cabaña_id = a.id AND r.estado = 'CheckIn'
+       JOIN huespedes h ON r.huesped_id = h.id
+       WHERE a.activo = 1 AND a.estado = 'Ocupada'
+       ORDER BY a.nombre`
+    );
+    return [...habitaciones, ...cabañas];
   }
 }
 

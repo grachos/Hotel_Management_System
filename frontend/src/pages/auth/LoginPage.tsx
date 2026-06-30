@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { authApi } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { BedDouble, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@hotel.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -88,6 +88,9 @@ export default function LoginPage() {
             {loading ? <Loader2 size={18} className="animate-spin" /> : null}
             {loading ? 'Ingresando...' : 'Iniciar Sesión'}
           </button>
+          <p className="text-center">
+            <Link to="/forgot-password" className="text-sm text-brand-600 hover:text-brand-700">¿Olvidaste tu contraseña?</Link>
+          </p>
         </form>
       </div>
     </div>
