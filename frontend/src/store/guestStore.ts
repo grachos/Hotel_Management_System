@@ -33,8 +33,8 @@ interface GuestState {
 
 export const useGuestStore = create<GuestState>((set) => ({
   token: localStorage.getItem('guest_token'),
-  huesped: JSON.parse(localStorage.getItem('guest_huesped') || 'null'),
-  reservacion: JSON.parse(localStorage.getItem('guest_reservacion') || 'null'),
+  huesped: (() => { try { const v = localStorage.getItem('guest_huesped'); return v && v !== 'undefined' ? JSON.parse(v) : null; } catch { return null; } })(),
+  reservacion: (() => { try { const v = localStorage.getItem('guest_reservacion'); return v && v !== 'undefined' ? JSON.parse(v) : null; } catch { return null; } })(),
   isAuthenticated: !!localStorage.getItem('guest_token'),
 
   setGuestAuth: (token, huesped, reservacion) => {

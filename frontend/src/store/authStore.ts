@@ -13,7 +13,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   token: localStorage.getItem('token'),
-  usuario: JSON.parse(localStorage.getItem('usuario') || 'null'),
+  usuario: (() => { try { const u = localStorage.getItem('usuario'); return u && u !== 'undefined' ? JSON.parse(u) : null; } catch { return null; } })(),
   isAuthenticated: !!localStorage.getItem('token'),
   isDarkMode: localStorage.getItem('darkMode') !== 'false',
 
