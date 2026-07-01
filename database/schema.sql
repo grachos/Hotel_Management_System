@@ -167,6 +167,7 @@ CREATE TABLE productos (
   precio_venta    DECIMAL(10,2) NOT NULL DEFAULT 0,
   imagen          VARCHAR(255),
   activo          TINYINT(1) NOT NULL DEFAULT 1,
+  visible         TINYINT(1) NOT NULL DEFAULT 1,
   created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (categoria_id) REFERENCES categorias(id),

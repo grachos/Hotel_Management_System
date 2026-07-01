@@ -97,6 +97,7 @@ export interface Producto {
   precio_venta: number;
   imagen?: string;
   activo: number;
+  visible: number;
   categoria_nombre?: string;
 }
 

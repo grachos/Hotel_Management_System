@@ -30,7 +30,7 @@ export class GuestService {
                       c.nombre as categoria_nombre, c.modulo as modulo
                FROM productos p
                JOIN categorias c ON p.categoria_id = c.id
-               WHERE p.activo = 1 AND p.stock_actual > 0`;
+               WHERE p.activo = 1 AND p.visible = 1 AND p.stock_actual > 0`;
     const params: any[] = [];
 
     if (modulo) {

@@ -19,6 +19,7 @@ export class InventarioService {
     if (filtros.modulo) {
       sql += ' AND (c.modulo = ? OR c.modulo = \'Todos\')';
       params.push(filtros.modulo);
+      sql += ' AND p.visible = 1';
     }
 
     if (filtros.search) {
@@ -52,11 +53,12 @@ export class InventarioService {
   async crearProducto(data: any): Promise<any> {
     const result = await query(
       `INSERT INTO productos (categoria_id, proveedor_id, nombre, descripcion, sku, unidad,
-        stock_actual, stock_minimo, precio_compra, precio_venta, imagen)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        stock_actual, stock_minimo, precio_compra, precio_venta, imagen, visible)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [data.categoria_id, data.proveedor_id || null, data.nombre, data.descripcion || null,
        data.sku || null, data.unidad || 'Unidad', data.stock_actual || 0, data.stock_minimo || 5,
-       data.precio_compra || 0, data.precio_venta || 0, data.imagen || null]
+       data.precio_compra || 0, data.precio_venta || 0, data.imagen || null,
+       data.visible !== undefined ? (data.visible ? 1 : 0) : 1]
     );
 
     if (data.stock_actual > 0) {
@@ -77,10 +79,11 @@ export class InventarioService {
     await query(
       `UPDATE productos SET categoria_id = ?, proveedor_id = ?, nombre = ?, descripcion = ?,
        sku = ?, unidad = ?, stock_actual = ?, stock_minimo = ?, precio_compra = ?,
-       precio_venta = ?, imagen = ? WHERE id = ?`,
+       precio_venta = ?, imagen = ?, visible = ? WHERE id = ?`,
       [data.categoria_id, data.proveedor_id || null, data.nombre, data.descripcion || null,
        data.sku || null, data.unidad, data.stock_actual, data.stock_minimo,
-       data.precio_compra, data.precio_venta, data.imagen || null, id]
+       data.precio_compra, data.precio_venta, data.imagen || null,
+       data.visible !== undefined ? (data.visible ? 1 : 0) : 1, id]
     );
 
     return this.obtenerProducto(id);

@@ -6,7 +6,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { Table } from '../../components/ui/Table';
 import { formatCurrency, formatDateTime } from '../../utils/helpers';
-import { Plus, Search, TrendingUp, AlertTriangle, Package, X, Loader2, CheckCircle } from 'lucide-react';
+import { Plus, Search, TrendingUp, AlertTriangle, Package, X, Loader2, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function InventarioPage() {
@@ -29,7 +29,7 @@ export default function InventarioPage() {
   const [nuevoForm, setNuevoForm] = useState({
     categoria_id: '', proveedor_id: '', nombre: '', descripcion: '',
     sku: '', unidad: 'Unidad', stock_actual: 0, stock_minimo: 5,
-    precio_compra: 0, precio_venta: 0,
+    precio_compra: 0, precio_venta: 0, visible: true,
   });
 
   const unidades = ['Unidad', 'Kg', 'Lt', 'Gr', 'Ml', 'Docena', 'Caja', 'Pack', 'Botella', 'Porción'];
@@ -58,7 +58,7 @@ export default function InventarioPage() {
       setCategorias(catRes.data.data || []);
       setProveedores(provRes.data.data || []);
     } catch (err) { console.error(err); }
-    setNuevoForm({ categoria_id: '', proveedor_id: '', nombre: '', descripcion: '', sku: '', unidad: 'Unidad', stock_actual: 0, stock_minimo: 5, precio_compra: 0, precio_venta: 0 });
+    setNuevoForm({ categoria_id: '', proveedor_id: '', nombre: '', descripcion: '', sku: '', unidad: 'Unidad', stock_actual: 0, stock_minimo: 5, precio_compra: 0, precio_venta: 0, visible: true });
     setShowNuevo(true);
   };
 
@@ -70,6 +70,7 @@ export default function InventarioPage() {
         ...nuevoForm,
         categoria_id: Number(nuevoForm.categoria_id),
         proveedor_id: nuevoForm.proveedor_id ? Number(nuevoForm.proveedor_id) : undefined,
+        visible: nuevoForm.visible ? 1 : 0,
       });
       setSuccess('Producto creado');
       setTimeout(() => setSuccess(''), 3000);
@@ -106,7 +107,20 @@ export default function InventarioPage() {
     { key: 'precio_compra', header: 'Costo', render: (p: Producto) => formatCurrency(p.precio_compra) },
     { key: 'precio_venta', header: 'Venta', render: (p: Producto) => <span className="font-bold text-brand-600">{formatCurrency(p.precio_venta)}</span> },
     { key: 'estado', header: 'Estado', render: (p: Producto) => p.stock_actual <= p.stock_minimo ? <Badge variant="danger">Stock Bajo</Badge> : <Badge variant="success">OK</Badge> },
+    { key: 'visible', header: 'Visible', render: (p: Producto) => (
+      <button onClick={(e) => { e.stopPropagation(); toggleVisible(p); }} className={`p-1.5 rounded-lg transition-colors ${p.visible ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`} title={p.visible ? 'Visibilidad: Activado' : 'Visibilidad: Desactivado (oculto en POS)'}>
+        {p.visible ? <Eye size={16} /> : <EyeOff size={16} />}
+      </button>
+    )},
   ];
+
+  const toggleVisible = async (p: Producto) => {
+    try {
+      await inventarioApi.actualizarProducto(p.id, { visible: !p.visible });
+      toast.success(`Producto ${p.visible ? 'ocultado' : 'visible'}`);
+      loadData();
+    } catch (err: any) { toast.error(err.response?.data?.error || 'Error'); }
+  };
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto fade-in">
@@ -213,6 +227,15 @@ export default function InventarioPage() {
               <label className="label">Descripción</label>
               <textarea className="input" rows={2} value={nuevoForm.descripcion} onChange={(e) => setNuevoForm({...nuevoForm, descripcion: e.target.value})} placeholder="Descripción del producto" />
             </div>
+            <div className="col-span-2 flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg border border-slate-100 dark:border-slate-600">
+              <button type="button" onClick={() => setNuevoForm({...nuevoForm, visible: !nuevoForm.visible})} className={`p-2 rounded-lg transition-colors ${nuevoForm.visible ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-200 text-slate-400'}`}>
+                {nuevoForm.visible ? <Eye size={18} /> : <EyeOff size={18} />}
+              </button>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Visible en {nuevoForm.visible ? 'POS y Huéspedes' : 'Solo Inventario'}</p>
+                <p className="text-xs text-slate-400">{nuevoForm.visible ? 'El producto se mostrará en los módulos de venta y a los huéspedes' : 'Oculto para ventas (ideal para materia prima o insumos internos)'}</p>
+              </div>
+            </div>
           </div>
           <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-700">
             <button onClick={() => setShowNuevo(false)} className="btn-secondary flex-1" disabled={saving}>Cancelar</button>
@@ -236,6 +259,13 @@ export default function InventarioPage() {
               <div><label className="label">Stock Mínimo</label><p className="text-slate-700">{selectedProducto.stock_minimo} {selectedProducto.unidad}</p></div>
               <div><label className="label">Precio de Compra</label><p className="text-slate-700">{formatCurrency(selectedProducto.precio_compra)}</p></div>
               <div><label className="label">Precio de Venta</label><p className="text-lg font-bold text-brand-600">{formatCurrency(selectedProducto.precio_venta)}</p></div>
+              <div>
+                <label className="label">Visibilidad</label>
+                <p className="flex items-center gap-2">
+                  {selectedProducto.visible ? <><Eye size={16} className="text-emerald-500" /> <span className="text-emerald-600 font-medium">Visible</span></> : <><EyeOff size={16} className="text-slate-400" /> <span className="text-slate-500">Oculto (solo inventario)</span></>}
+                  <button onClick={() => toggleVisible(selectedProducto)} className="btn-ghost text-xs py-1 px-2 ml-2">{selectedProducto.visible ? 'Ocultar' : 'Mostrar'}</button>
+                </p>
+              </div>
             </div>
             <div className="flex gap-3 pt-4 border-t border-slate-100">
               <button onClick={() => { setShowAjuste(true); }} className="btn-primary flex-1"><TrendingUp size={18} /> Ajustar Stock</button>
