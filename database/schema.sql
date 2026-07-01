@@ -204,6 +204,7 @@ CREATE TABLE pedidos (
   estado          ENUM('Pendiente','Preparando','Completado','Entregado','Cancelado','Facturado') DEFAULT 'Pendiente',
   subtotal        DECIMAL(10,2) NOT NULL DEFAULT 0,
   impuesto        DECIMAL(10,2) NOT NULL DEFAULT 0,
+  recargo_delivery DECIMAL(10,2) DEFAULT 0.00,
   total           DECIMAL(10,2) NOT NULL DEFAULT 0,
   notas           TEXT,
   atendido_por    INT,
