@@ -6,6 +6,7 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/deploy-hostinger.yml'
+  workflow_dispatch:
 
 jobs:
   deploy:
