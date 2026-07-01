@@ -1,0 +1,1 @@
+ALTER TABLE pedidos ADD COLUMN recargo_delivery DECIMAL(10,2) DEFAULT 0.00;
