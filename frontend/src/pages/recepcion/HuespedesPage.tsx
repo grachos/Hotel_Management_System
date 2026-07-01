@@ -122,10 +122,10 @@ export default function HuespedesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
-          [1, 2, 3, 4, 5, 6].map((i) => (
+          [1, 2, 3, 4, 5, 6]?.map((i) => (
             <div key={i} className="card h-36 animate-pulse" />
           ))
-        ) : filtered.length === 0 ? (
+        ) : filtered?.length === 0 ? (
           <div className="col-span-full card p-12 text-center">
             <User size={48} className="mx-auto mb-3 text-slate-300" />
             <p className="text-slate-500">No se encontraron huéspedes</p>
@@ -134,7 +134,7 @@ export default function HuespedesPage() {
             </button>
           </div>
         ) : (
-          filtered.map((huesped) => (
+          filtered?.map((huesped) => (
             <Card key={huesped.id} hover onClick={() => setSelected(huesped)}>
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center text-brand-600 dark:text-brand-400 font-bold text-lg flex-shrink-0">

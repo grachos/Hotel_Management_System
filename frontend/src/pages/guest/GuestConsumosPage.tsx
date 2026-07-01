@@ -78,11 +78,11 @@ export default function GuestConsumosPage() {
       </div>
 
       {tab === 'consumos' ? (
-        consumos.length === 0 ? (
+        consumos?.length === 0 ? (
           <p className="text-sm text-slate-400 text-center py-8">No hay consumos registrados</p>
         ) : (
           <div className="space-y-2">
-            {consumos.map((consumo, i) => (
+            {consumos?.map((consumo, i) => (
               <div key={i} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-4 flex items-center justify-between shadow-sm">
                 <div>
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{consumo.producto_nombre}</p>
@@ -98,11 +98,11 @@ export default function GuestConsumosPage() {
           </div>
         )
       ) : (
-        pedidos.length === 0 ? (
+        pedidos?.length === 0 ? (
           <p className="text-sm text-slate-400 text-center py-8">No hay pedidos registrados</p>
         ) : (
           <div className="space-y-3">
-            {pedidos.map((pedido) => (
+            {pedidos?.map((pedido) => (
               <div key={pedido.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-4 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">

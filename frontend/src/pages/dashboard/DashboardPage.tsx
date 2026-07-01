@@ -19,7 +19,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl shadow-lg p-3 text-sm">
         <p className="text-slate-500 dark:text-slate-400 mb-1">{label}</p>
-        {payload.map((entry: any, index: number) => (
+        {payload?.map((entry: any, index: number) => (
           <p key={index} className="font-bold text-slate-800 dark:text-slate-100" style={{ color: entry.color }}>
             {entry.name}: {entry.name === 'Ventas' ? formatCurrency(entry.value) : entry.value}
           </p>
@@ -71,7 +71,7 @@ export default function DashboardPage() {
   }
 
   const ventasModuloColors = ['#2563eb', '#7c3aed', '#0d9488'];
-  const ventasModuloData = (data.ventasModulo || []).map((v: any, i: number) => ({
+  const ventasModuloData = (data.ventasModulo || [])?.map((v: any, i: number) => ({
     name: v.modulo,
     value: parseFloat(v.total_ventas) || 0,
     color: ventasModuloColors[i],
@@ -181,7 +181,7 @@ export default function DashboardPage() {
                     outerRadius={55}
                     dataKey="value"
                   >
-                    {ventasModuloData.map((entry: any, index: number) => (
+                    {ventasModuloData?.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -190,7 +190,7 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             </div>
             <div className="flex justify-center gap-4">
-              {ventasModuloData.map((v: any, i: number) => (
+              {ventasModuloData?.map((v: any, i: number) => (
                 <div key={i} className="flex items-center gap-1.5 text-xs text-slate-500">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ background: v.color }} />
                   {v.name}
@@ -207,7 +207,7 @@ export default function DashboardPage() {
             <CardTitle>Productos Más Vendidos</CardTitle>
           </CardHeader>
           <div className="space-y-3">
-            {(data.topProductos || []).slice(0, 5).map((prod: any, i: number) => (
+            {(data.topProductos || []).slice(0, 5)?.map((prod: any, i: number) => (
               <div key={i} className="flex items-center justify-between py-2 px-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-slate-400 w-6">{i + 1}.</span>
@@ -230,7 +230,7 @@ export default function DashboardPage() {
             <CardTitle>Alertas Recientes</CardTitle>
           </CardHeader>
           <div className="space-y-3">
-            {alertas.slice(0, 5).map((alerta: any) => (
+            {alertas.slice(0, 5)?.map((alerta: any) => (
               <div key={alerta.id} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600">
                 <div className={`p-1.5 rounded-lg ${
                   alerta.tipo === 'Stock' ? 'bg-red-100 text-red-600' :

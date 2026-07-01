@@ -127,7 +127,7 @@ export default function NotificationPanel() {
   const badgeCount = prevCount.current;
 
   const markRead = (id: string) => {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, read: true } : i)));
+    setItems((prev) => prev?.map((i) => (i.id === id ? { ...i, read: true } : i)));
   };
 
   const handleClick = (item: NotifItem) => {
@@ -152,7 +152,7 @@ export default function NotificationPanel() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-700">
             <h3 className="font-semibold text-sm text-slate-800 dark:text-slate-100">Notificaciones</h3>
             {unread > 0 && (
-              <button onClick={() => setItems((prev) => prev.map((i) => ({ ...i, read: true })))}
+              <button onClick={() => setItems((prev) => prev?.map((i) => ({ ...i, read: true })))}
                 className="text-xs text-brand-600 hover:text-brand-700 font-medium">Marcar todas leídas</button>
             )}
           </div>
@@ -160,10 +160,10 @@ export default function NotificationPanel() {
           <div className="max-h-80 overflow-y-auto">
             {loading ? (
               <div className="flex justify-center py-8"><Loader2 size={18} className="animate-spin text-slate-400" /></div>
-            ) : items.length === 0 ? (
+            ) : items?.length === 0 ? (
               <div className="text-center py-8 text-sm text-slate-400">Sin notificaciones</div>
             ) : (
-              items.slice(0, 20).map((item) => (
+              items.slice(0, 20)?.map((item) => (
                 <button key={item.id} onClick={() => handleClick(item)}
                   className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/50 border-b border-slate-50 dark:border-slate-700/50 ${!item.read ? 'bg-brand-50/50 dark:bg-brand-900/10' : ''}`}>
                   <div className={`p-1.5 rounded-lg mt-0.5 flex-shrink-0 ${

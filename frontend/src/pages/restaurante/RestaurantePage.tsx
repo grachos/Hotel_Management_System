@@ -70,7 +70,7 @@ export default function RestaurantePage() {
   const addToCart = (producto: Producto) => {
     setCart((prev) => {
       const existing = prev.find((c) => c.producto.id === producto.id);
-      if (existing) return prev.map((c) => c.producto.id === producto.id ? { ...c, cantidad: c.cantidad + 1 } : c);
+      if (existing) return prev?.map((c) => c.producto.id === producto.id ? { ...c, cantidad: c.cantidad + 1 } : c);
       return [...prev, { producto, cantidad: 1 }];
     });
   };
@@ -78,7 +78,7 @@ export default function RestaurantePage() {
   const removeFromCart = (productoId: number) => {
     setCart((prev) => {
       const existing = prev.find((c) => c.producto.id === productoId);
-      if (existing && existing.cantidad > 1) return prev.map((c) => c.producto.id === productoId ? { ...c, cantidad: c.cantidad - 1 } : c);
+      if (existing && existing.cantidad > 1) return prev?.map((c) => c.producto.id === productoId ? { ...c, cantidad: c.cantidad - 1 } : c);
       return prev.filter((c) => c.producto.id !== productoId);
     });
   };
@@ -91,7 +91,7 @@ export default function RestaurantePage() {
         tipo_entrega: tipoEntrega,
         mesa: (tipoEntrega === 'Local' && mesa) ? mesa : undefined,
         recargo_delivery: (tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') ? recargoDelivery : 0,
-        productos: cart.map((c) => ({ producto_id: c.producto.id, cantidad: c.cantidad, precio_unitario: c.producto.precio_venta })),
+        productos: cart?.map((c) => ({ producto_id: c.producto.id, cantidad: c.cantidad, precio_unitario: c.producto.precio_venta })),
       };
       if ((tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') && alojamientoId) {
         payload.alojamiento_id = alojamientoId;
@@ -131,7 +131,7 @@ export default function RestaurantePage() {
           <button onClick={() => setShowPedidos(!showPedidos)} className="btn-secondary relative">
             <ClipboardList size={18} />
             <span className="hidden sm:inline">Pedidos</span>
-            {pedidosActivos.length > 0 && (
+            {pedidosActivos?.length > 0 && (
               <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
                 {pedidosActivos.length}
               </span>
@@ -140,7 +140,7 @@ export default function RestaurantePage() {
           <button onClick={() => setShowCart(true)} className="btn-primary relative">
             <ShoppingCart size={18} />
             <span className="hidden sm:inline">Nuevo Pedido</span>
-            {cart.length > 0 && (
+            {cart?.length > 0 && (
               <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white text-brand-700 text-xs rounded-full flex items-center justify-center font-bold">
                 {cart.reduce((s, c) => s + c.cantidad, 0)}
               </span>
@@ -161,7 +161,7 @@ export default function RestaurantePage() {
           }`}>
           Todas
         </button>
-        {categorias.map((cat) => (
+        {categorias?.map((cat) => (
           <button key={cat.id} onClick={() => setCategoriaId(cat.id)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               categoriaId === cat.id ? 'bg-brand-600 text-white shadow-md' : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600'
@@ -173,11 +173,11 @@ export default function RestaurantePage() {
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="card h-28 animate-pulse" />)}
+          {[1, 2, 3, 4, 5, 6]?.map((i) => <div key={i} className="card h-28 animate-pulse" />)}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((producto) => (
+          {filtered?.map((producto) => (
             <Card key={producto.id} hover onClick={() => addToCart(producto)} className="p-4">
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
@@ -249,7 +249,7 @@ export default function RestaurantePage() {
           )}
 
           <div className="space-y-2 max-h-60 overflow-y-auto">
-            {cart.map((c) => (
+            {cart?.map((c) => (
               <div key={c.producto.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg border border-slate-100 dark:border-slate-600">
                 <div>
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{c.producto.nombre}</p>
@@ -282,7 +282,7 @@ export default function RestaurantePage() {
 
       <Modal isOpen={showPedidos} onClose={() => setShowPedidos(false)} title="Pedidos Activos - Restaurante" size="lg">
         <div className="space-y-3">
-          {pedidosActivos.map((pedido) => (
+          {pedidosActivos?.map((pedido) => (
             <div key={pedido.id} className="p-4 bg-slate-50 dark:bg-slate-700 rounded-xl border border-slate-100 dark:border-slate-600">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">

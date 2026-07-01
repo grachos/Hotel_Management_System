@@ -27,7 +27,7 @@ export default function AdminPage() {
           { id: 'roles', label: 'Roles y Permisos', icon: Shield },
           { id: 'config', label: 'Configuración', icon: Settings },
           { id: 'habitaciones', label: 'Habitaciones', icon: BedDouble },
-        ].map((t) => (
+        ]?.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id as any)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               tab === t.id ? 'bg-brand-600 text-white shadow-md' : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600'
@@ -41,7 +41,7 @@ export default function AdminPage() {
 
       {tab === 'roles' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {['Administrador', 'Gerente', 'Recepción', 'Restaurante', 'Bar', 'MiniMarket', 'Huésped'].map((role) => (
+          {['Administrador', 'Gerente', 'Recepción', 'Restaurante', 'Bar', 'MiniMarket', 'Huésped']?.map((role) => (
             <Card key={role}>
               <div className="flex items-center gap-3 mb-3">
                 <Shield size={20} className="text-brand-600" />
@@ -131,7 +131,7 @@ function UsuariosManager() {
           <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-brand-600" /></div>
         ) : (
           <div className="space-y-2">
-            {usuarios.map((u) => (
+            {usuarios?.map((u) => (
               <div key={u.id} className="flex items-center gap-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 transition-colors hover:bg-slate-100 dark:hover:bg-slate-600">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0 ${u.activo ? 'bg-brand-600' : 'bg-slate-400'}`}>
                   {u.nombre.charAt(0).toUpperCase()}
@@ -175,7 +175,7 @@ function UsuariosManager() {
           <div>
             <label className="label">Rol</label>
             <select className="input" value={form.role_id} onChange={(e) => setForm({...form, role_id: Number(e.target.value)})}>
-              {roles.filter((r) => r.id !== 1).map((r) => (
+              {roles.filter((r) => r.id !== 1)?.map((r) => (
                 <option key={r.id} value={r.id}>{r.nombre}</option>
               ))}
             </select>
@@ -219,7 +219,7 @@ function ConfigPanel() {
   const save = async () => {
     setSaving(true);
     try {
-      const entries = Object.entries(configs).map(([clave, valor]) => ({ clave, valor }));
+      const entries = Object.entries(configs)?.map(([clave, valor]) => ({ clave, valor }));
       await configApi.update(entries);
       setSuccess('Configuración guardada');
       setTimeout(() => setSuccess(''), 3000);

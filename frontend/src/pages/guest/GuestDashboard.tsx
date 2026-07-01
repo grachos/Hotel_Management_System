@@ -11,7 +11,7 @@ function formatDate(dateStr: string) {
 
 function parseAmenities(amenitiesStr?: string): string[] {
   if (!amenitiesStr) return [];
-  return amenitiesStr.split(',').map((a) => a.trim()).filter(Boolean);
+  return amenitiesStr.split(',')?.map((a) => a.trim()).filter(Boolean);
 }
 
 const amenityIcons: Record<string, any> = {
@@ -83,11 +83,11 @@ export default function GuestDashboard() {
         </div>
       </div>
 
-      {amenities.length > 0 && (
+      {amenities?.length > 0 && (
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-5 shadow-sm">
           <h2 className="font-semibold text-slate-800 dark:text-slate-100 mb-4">Amenidades de {reservacion.habitacion_numero ? 'la Habitación' : 'la Cabaña'}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {amenities.map((amenity, i) => {
+            {amenities?.map((amenity, i) => {
               const Icon = getAmenityIcon(amenity);
               return (
                 <div key={i} className="flex items-center gap-2.5 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl">

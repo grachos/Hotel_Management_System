@@ -49,7 +49,7 @@ const CustomTooltip = ({ active, payload, label, formatter }: any) => {
   return (
     <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg p-3 text-sm">
       <p className="text-slate-500 dark:text-slate-400 mb-1 font-medium">{label}</p>
-      {payload.map((entry: any, i: number) => (
+      {payload?.map((entry: any, i: number) => (
         <p key={i} className="font-semibold text-slate-800 dark:text-slate-100" style={{ color: entry.color }}>
           {entry.name}: {formatter ? formatter(entry.value) : entry.value}
         </p>
@@ -120,7 +120,7 @@ export default function ReportesPage() {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
-            {[7, 15, 30, 90].map((d) => (
+            {[7, 15, 30, 90]?.map((d) => (
               <button key={d} onClick={() => setPeriodo(d)}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${periodo === d ? 'bg-white dark:bg-slate-600 text-brand-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>{d}d</button>
             ))}
@@ -147,7 +147,7 @@ export default function ReportesPage() {
           { id: 'general', label: 'Ventas & Ocupación' },
           { id: 'productos', label: 'Productos' },
           { id: 'huespedes', label: 'Huéspedes' },
-        ].map((t) => (
+        ]?.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id as any)}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${tab === t.id ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>{t.label}</button>
         ))}
@@ -197,11 +197,11 @@ export default function ReportesPage() {
             <Card>
               <CardHeader><CardTitle>Distribución por Módulo</CardTitle></CardHeader>
               <div className="h-64 flex items-center justify-center">
-                {modulos.length > 0 ? (
+                {modulos?.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={modulos.map((m: any) => ({ name: m.modulo, value: parseFloat(m.total) || 0 }))} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={3}>
-                        {modulos.map((_: any, i: number) => <Cell key={i} fill={MODULE_COLORS[_.modulo] || COLORS[i % COLORS.length]} />)}
+                      <Pie data={modulos?.map((m: any) => ({ name: m.modulo, value: parseFloat(m.total) || 0 }))} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={3}>
+                        {modulos?.map((_: any, i: number) => <Cell key={i} fill={MODULE_COLORS[_.modulo] || COLORS[i % COLORS.length]} />)}
                       </Pie>
                       <Tooltip content={<CustomTooltip formatter={(v: number) => formatCurrency(v)} />} />
                     </PieChart>
@@ -211,7 +211,7 @@ export default function ReportesPage() {
                 )}
               </div>
               <div className="flex justify-center gap-6 pb-4">
-                {modulos.map((m: any) => (
+                {modulos?.map((m: any) => (
                   <div key={m.modulo} className="text-center">
                     <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ background: MODULE_COLORS[m.modulo] || '#2563eb' }} />
@@ -271,7 +271,7 @@ export default function ReportesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                {topProductos.map((p: any, i: number) => (
+                {topProductos?.map((p: any, i: number) => (
                   <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
                     <td className="py-3 px-4 text-slate-400 font-mono">{String(i + 1).padStart(2, '0')}</td>
                     <td className="py-3 px-4 font-medium text-slate-800 dark:text-slate-100">{p.nombre}</td>
@@ -295,7 +295,7 @@ export default function ReportesPage() {
           <Card>
             <CardHeader><CardTitle>Origen de Huéspedes</CardTitle></CardHeader>
             <div className="space-y-3 p-4">
-              {(guestDemo?.origen || []).slice(0, 8).map((item: any, i: number) => {
+              {(guestDemo?.origen || []).slice(0, 8)?.map((item: any, i: number) => {
                 const totalOrig = guestDemo?.origen?.reduce((s: number, o: any) => s + parseInt(o.total || 0), 0) || 1;
                 const pct = (parseInt(item.total || 0) / totalOrig) * 100;
                 return (
@@ -319,7 +319,7 @@ export default function ReportesPage() {
           <Card>
             <CardHeader><CardTitle>Crecimiento de Huéspedes</CardTitle></CardHeader>
             <div className="h-64 p-4">
-              {(guestDemo?.tendencia || []).length > 0 ? (
+              {(guestDemo?.tendencia || [])?.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={guestDemo.tendencia}>
                     <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />

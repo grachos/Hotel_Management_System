@@ -26,7 +26,7 @@ export function Table<T extends Record<string, any>>({
     return (
       <div className="card p-8 text-center">
         <div className="animate-pulse space-y-4">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3]?.map((i) => (
             <div key={i} className="h-10 bg-slate-200 dark:bg-slate-700 rounded" />
           ))}
         </div>
@@ -47,7 +47,7 @@ export function Table<T extends Record<string, any>>({
       <table className="w-full">
         <thead>
           <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
-            {columns.map((col) => (
+            {columns?.map((col) => (
               <th
                 key={col.key}
                 className={cn(
@@ -61,7 +61,7 @@ export function Table<T extends Record<string, any>>({
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-          {data.map((item, index) => (
+          {data?.map((item, index) => (
             <tr
               key={item.id || index}
               className={cn(
@@ -70,7 +70,7 @@ export function Table<T extends Record<string, any>>({
               )}
               onClick={() => onRowClick?.(item)}
             >
-              {columns.map((col) => (
+              {columns?.map((col) => (
                 <td key={col.key} className={cn('px-4 py-3 text-sm text-slate-700 dark:text-slate-300', col.className)}>
                   {col.render ? col.render(item) : item[col.key]}
                 </td>

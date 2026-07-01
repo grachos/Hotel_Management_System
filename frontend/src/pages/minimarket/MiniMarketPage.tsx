@@ -59,7 +59,7 @@ export default function MiniMarketPage() {
   const addToCart = (producto: Producto) => {
     setCart((prev) => {
       const existing = prev.find((c) => c.producto.id === producto.id);
-      if (existing) return prev.map((c) => c.producto.id === producto.id ? { ...c, cantidad: c.cantidad + 1 } : c);
+      if (existing) return prev?.map((c) => c.producto.id === producto.id ? { ...c, cantidad: c.cantidad + 1 } : c);
       return [...prev, { producto, cantidad: 1 }];
     });
   };
@@ -67,7 +67,7 @@ export default function MiniMarketPage() {
   const removeFromCart = (productoId: number) => {
     setCart((prev) => {
       const existing = prev.find((c) => c.producto.id === productoId);
-      if (existing && existing.cantidad > 1) return prev.map((c) => c.producto.id === productoId ? { ...c, cantidad: c.cantidad - 1 } : c);
+      if (existing && existing.cantidad > 1) return prev?.map((c) => c.producto.id === productoId ? { ...c, cantidad: c.cantidad - 1 } : c);
       return prev.filter((c) => c.producto.id !== productoId);
     });
   };
@@ -79,7 +79,7 @@ export default function MiniMarketPage() {
         modulo: 'MiniMarket',
         tipo_entrega: tipoEntrega,
         recargo_delivery: (tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') ? recargoDelivery : 0,
-        productos: cart.map((c) => ({ producto_id: c.producto.id, cantidad: c.cantidad, precio_unitario: c.producto.precio_venta })),
+        productos: cart?.map((c) => ({ producto_id: c.producto.id, cantidad: c.cantidad, precio_unitario: c.producto.precio_venta })),
       };
       if ((tipoEntrega === 'Habitación' || tipoEntrega === 'Cabaña') && alojamientoId) {
         payload.alojamiento_id = alojamientoId;
@@ -104,7 +104,7 @@ export default function MiniMarketPage() {
         </div>
         <button onClick={() => setShowCart(true)} className="btn-primary relative">
           <ShoppingCart size={18} /> Vender
-          {cart.length > 0 && (
+          {cart?.length > 0 && (
             <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-white text-brand-700 text-xs rounded-full flex items-center justify-center font-bold">{cart.reduce((s, c) => s + c.cantidad, 0)}</span>
           )}
         </button>
@@ -118,7 +118,7 @@ export default function MiniMarketPage() {
       <div className="flex gap-2 flex-wrap">
         <button onClick={() => setCategoriaId(null)}
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${!categoriaId ? 'bg-brand-600 text-white shadow-md' : 'bg-white dark:bg-slate-700 text-slate-600 border border-slate-200'}`}>Todos</button>
-        {categorias.map((cat) => (
+        {categorias?.map((cat) => (
           <button key={cat.id} onClick={() => setCategoriaId(cat.id)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${categoriaId === cat.id ? 'bg-brand-600 text-white shadow-md' : 'bg-white dark:bg-slate-700 text-slate-600 border border-slate-200'}`}>{cat.nombre}</button>
         ))}
@@ -126,11 +126,11 @@ export default function MiniMarketPage() {
 
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => <div key={i} className="card h-24 animate-pulse" />)}
+          {[1, 2, 3, 4, 5, 6, 7, 8]?.map((i) => <div key={i} className="card h-24 animate-pulse" />)}
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          {filtered.map((p) => (
+          {filtered?.map((p) => (
             <Card key={p.id} hover onClick={() => addToCart(p)} className="p-4">
               <div className="flex flex-col items-center text-center gap-2">
                 <div className="w-12 h-12 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center">
@@ -187,7 +187,7 @@ export default function MiniMarketPage() {
           )}
 
           <div className="space-y-2 max-h-60 overflow-y-auto">
-            {cart.map((c) => (
+            {cart?.map((c) => (
               <div key={c.producto.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
                 <div><p className="text-sm font-medium">{c.producto.nombre}</p><p className="text-xs text-slate-400">{formatCurrency(c.producto.precio_venta)}</p></div>
                 <div className="flex items-center gap-3">

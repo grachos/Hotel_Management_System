@@ -47,7 +47,7 @@ export default function GuestLayout() {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-          {navItems.map((item) => (
+          {navItems?.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -158,7 +158,7 @@ export default function GuestLayout() {
         {/* Mobile bottom nav */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-around h-16 px-1">
-            {navItems.map((item) => (
+            {navItems?.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}

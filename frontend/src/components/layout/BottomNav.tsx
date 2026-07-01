@@ -47,7 +47,7 @@ export function BottomNav() {
               </button>
             </div>
             <div className="px-2 py-3 space-y-0.5">
-              {moreItems.map((item) => (
+              {moreItems?.map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
@@ -90,7 +90,7 @@ export function BottomNav() {
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 safe-area-bottom">
         <div className="flex items-center justify-around h-16 px-1">
-          {mainItems.map((item) => (
+          {mainItems?.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}

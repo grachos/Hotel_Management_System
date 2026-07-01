@@ -138,10 +138,10 @@ export default function HabitacionesManager() {
               <>
                 <div><label className="label">Número</label><input className="input" value={(form as RoomForm).numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} /></div>
                 <div><label className="label">Piso</label><input className="input" type="number" value={(form as RoomForm).piso} onChange={(e) => setForm({ ...form, piso: Number(e.target.value) })} /></div>
-                <div><label className="label">Tipo</label><select className="input" value={(form as RoomForm).tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })}>{tiposHabitacion.map(t => <option key={t}>{t}</option>)}</select></div>
+                <div><label className="label">Tipo</label><select className="input" value={(form as RoomForm).tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })}>{tiposHabitacion?.map(t => <option key={t}>{t}</option>)}</select></div>
                 <div><label className="label">Capacidad</label><input className="input" type="number" value={(form as RoomForm).capacidad} onChange={(e) => setForm({ ...form, capacidad: Number(e.target.value) })} /></div>
                 <div><label className="label">Precio por Noche (S/.)</label><input className="input" type="number" step="0.01" value={(form as RoomForm).precio_noche} onChange={(e) => setForm({ ...form, precio_noche: Number(e.target.value) })} /></div>
-                <div><label className="label">Estado</label><select className="input" value={(form as RoomForm).estado} onChange={(e) => setForm({ ...form, estado: e.target.value })}>{estados.map(e => <option key={e}>{e}</option>)}</select></div>
+                <div><label className="label">Estado</label><select className="input" value={(form as RoomForm).estado} onChange={(e) => setForm({ ...form, estado: e.target.value })}>{estados?.map(e => <option key={e}>{e}</option>)}</select></div>
                 <div className="md:col-span-2"><label className="label">Descripción</label><textarea className="input" value={(form as RoomForm).descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} /></div>
                 <div className="md:col-span-2"><label className="label">Amenities (separados por coma)</label><textarea className="input" value={(form as RoomForm).amenities} onChange={(e) => setForm({ ...form, amenities: e.target.value })} placeholder="TV, WiFi, Baño privado, Minibar..." /></div>
               </>
@@ -150,7 +150,7 @@ export default function HabitacionesManager() {
                 <div><label className="label">Nombre</label><input className="input" value={(form as CabinForm).nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} /></div>
                 <div><label className="label">Capacidad</label><input className="input" type="number" value={(form as CabinForm).capacidad} onChange={(e) => setForm({ ...form, capacidad: Number(e.target.value) })} /></div>
                 <div><label className="label">Precio por Noche (S/.)</label><input className="input" type="number" step="0.01" value={(form as CabinForm).precio_noche} onChange={(e) => setForm({ ...form, precio_noche: Number(e.target.value) })} /></div>
-                <div><label className="label">Estado</label><select className="input" value={(form as CabinForm).estado} onChange={(e) => setForm({ ...form, estado: e.target.value })}>{estados.map(e => <option key={e}>{e}</option>)}</select></div>
+                <div><label className="label">Estado</label><select className="input" value={(form as CabinForm).estado} onChange={(e) => setForm({ ...form, estado: e.target.value })}>{estados?.map(e => <option key={e}>{e}</option>)}</select></div>
                 <div className="md:col-span-2"><label className="label">Descripción</label><textarea className="input" value={(form as CabinForm).descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} /></div>
                 <div className="md:col-span-2"><label className="label">Amenities (separados por coma)</label><textarea className="input" value={(form as CabinForm).amenities} onChange={(e) => setForm({ ...form, amenities: e.target.value })} placeholder="TV, WiFi, Baño privado, Fogata..." /></div>
               </>
@@ -166,7 +166,7 @@ export default function HabitacionesManager() {
         <CardHeader><CardTitle>{tab === 'habitaciones' ? 'Habitaciones' : 'Cabañas'}</CardTitle></CardHeader>
         {tab === 'habitaciones' ? (
           <div className="divide-y divide-slate-100 dark:divide-slate-700">
-            {rooms.map((r) => (
+            {rooms?.map((r) => (
               <div key={r.id} className="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                 <div className="w-10 h-10 bg-brand-50 dark:bg-brand-900/20 rounded-xl flex items-center justify-center text-brand-600">
                   <BedDouble size={18} />
@@ -181,11 +181,11 @@ export default function HabitacionesManager() {
                 <button onClick={() => handleDelete(r.id)} className="btn-ghost p-1.5 text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
               </div>
             ))}
-            {rooms.length === 0 && <p className="text-sm text-slate-400 text-center py-8">No hay habitaciones</p>}
+            {rooms?.length === 0 && <p className="text-sm text-slate-400 text-center py-8">No hay habitaciones</p>}
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-700">
-            {cabins.map((c) => (
+            {cabins?.map((c) => (
               <div key={c.id} className="flex items-center gap-4 p-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                 <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center text-emerald-600">
                   <Home size={18} />
@@ -200,7 +200,7 @@ export default function HabitacionesManager() {
                 <button onClick={() => handleDelete(c.id)} className="btn-ghost p-1.5 text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
               </div>
             ))}
-            {cabins.length === 0 && <p className="text-sm text-slate-400 text-center py-8">No hay cabañas</p>}
+            {cabins?.length === 0 && <p className="text-sm text-slate-400 text-center py-8">No hay cabañas</p>}
           </div>
         )}
       </Card>

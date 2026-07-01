@@ -174,7 +174,7 @@ export default function NuevaReservacionModal({ isOpen, onClose, onSuccess }: Pr
         <div>
           <label className="label">Tipo de Reservación</label>
           <div className="flex gap-3">
-            {(['Pernocte', 'Pasadia'] as const).map((t) => (
+            {(['Pernocte', 'Pasadia'] as const)?.map((t) => (
               <button
                 key={t}
                 type="button"
@@ -215,10 +215,10 @@ export default function NuevaReservacionModal({ isOpen, onClose, onSuccess }: Pr
               />
               {showHuespedSearch && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg z-50 max-h-48 overflow-y-auto">
-                  {huespedes.length === 0 ? (
+                  {huespedes?.length === 0 ? (
                     <p className="p-3 text-sm text-slate-400 text-center">No se encontraron huéspedes</p>
                   ) : (
-                    huespedes.map((h) => (
+                    huespedes?.map((h) => (
                       <button
                         key={h.id}
                         type="button"
@@ -259,7 +259,7 @@ export default function NuevaReservacionModal({ isOpen, onClose, onSuccess }: Pr
                     onChange={(e) => { setSelectedHabitacion(Number(e.target.value) || ''); setSelectedCabania(''); }}
                   >
                     <option value="">Sin habitación</option>
-                    {habitaciones.map((h) => (
+                    {habitaciones?.map((h) => (
                       <option key={h.id} value={h.id}>
                         {h.numero} - {h.tipo} (S/.{h.precio_noche})
                       </option>
@@ -274,7 +274,7 @@ export default function NuevaReservacionModal({ isOpen, onClose, onSuccess }: Pr
                     onChange={(e) => { setSelectedCabania(Number(e.target.value) || ''); setSelectedHabitacion(''); }}
                   >
                     <option value="">Sin cabaña</option>
-                    {cabanias.map((c) => (
+                    {cabanias?.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.nombre} - Cap. {c.capacidad} (S/.{c.precio_noche})
                       </option>
@@ -322,11 +322,11 @@ export default function NuevaReservacionModal({ isOpen, onClose, onSuccess }: Pr
               <Plus size={14} /> Agregar
             </button>
           </div>
-          {acompanantes.length === 0 ? (
+          {acompanantes?.length === 0 ? (
             <p className="text-xs text-slate-400">Sin acompañantes registrados</p>
           ) : (
             <div className="space-y-2">
-              {acompanantes.map((a, i) => (
+              {acompanantes?.map((a, i) => (
                 <div key={i} className="flex gap-2 items-start p-2 bg-slate-50 dark:bg-slate-700 rounded-lg">
                   <div className="flex-1 grid grid-cols-2 gap-2">
                     <input className="input text-sm py-1.5" placeholder="Nombre"

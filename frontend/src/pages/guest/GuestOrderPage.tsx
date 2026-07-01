@@ -78,7 +78,7 @@ export default function GuestOrderPage() {
     setCart((prev) => {
       const existing = prev.find((item) => item.producto_id === producto.id);
       if (existing) {
-        return prev.map((item) =>
+        return prev?.map((item) =>
           item.producto_id === producto.id
             ? { ...item, cantidad: item.cantidad + 1 }
             : item
@@ -92,7 +92,7 @@ export default function GuestOrderPage() {
     setCart((prev) => {
       const existing = prev.find((item) => item.producto_id === productoId);
       if (existing && existing.cantidad > 1) {
-        return prev.map((item) =>
+        return prev?.map((item) =>
           item.producto_id === productoId
             ? { ...item, cantidad: item.cantidad - 1 }
             : item
@@ -115,7 +115,7 @@ export default function GuestOrderPage() {
       await guestApi.crearPedido({
         modulo,
         tipo_entrega: tipoEntrega,
-        productos: cart.map((item) => ({
+        productos: cart?.map((item) => ({
           producto_id: item.producto_id,
           cantidad: item.cantidad,
           precio_unitario: item.precio_unitario,
@@ -164,11 +164,11 @@ export default function GuestOrderPage() {
         <div>
           <button onClick={() => setShowHistory(false)} className="text-sm text-brand-600 mb-3">&larr; Volver al menú</button>
           <h2 className="font-semibold text-slate-700 dark:text-slate-200 mb-3">Mis Pedidos</h2>
-          {pedidos.length === 0 ? (
+          {pedidos?.length === 0 ? (
             <p className="text-sm text-slate-400 text-center py-8">No has realizado pedidos aún</p>
           ) : (
             <div className="space-y-3">
-              {pedidos.map((pedido) => (
+              {pedidos?.map((pedido) => (
                 <div key={pedido.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-4 shadow-sm">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-medium text-slate-500">{pedido.modulo}</span>
@@ -191,7 +191,7 @@ export default function GuestOrderPage() {
       ) : (
         <>
           <div className="flex gap-2 overflow-x-auto pb-1">
-            {tabs.map((tab) => (
+            {tabs?.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => { setModulo(tab.id); setCart([]); }}
@@ -225,7 +225,7 @@ export default function GuestOrderPage() {
             </div>
           ) : (
             <div className="grid gap-3">
-              {filteredProductos.map((producto) => (
+              {filteredProductos?.map((producto) => (
                 <div key={producto.id} className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 p-4 flex items-center justify-between shadow-sm">
                   <div className="flex-1 min-w-0 mr-3">
                     <p className="font-medium text-slate-800 dark:text-slate-100 text-sm">{producto.nombre}</p>
@@ -263,7 +263,7 @@ export default function GuestOrderPage() {
                   </div>
                 </div>
               ))}
-              {filteredProductos.length === 0 && (
+              {filteredProductos?.length === 0 && (
                 <p className="text-sm text-slate-400 text-center py-8">
                   {searchQuery ? 'No se encontraron productos con ese nombre' : `No hay productos disponibles en ${modulo}`}
                 </p>
@@ -273,7 +273,7 @@ export default function GuestOrderPage() {
         </>
       )}
 
-      {cartOpen && cart.length > 0 && (
+      {cartOpen && cart?.length > 0 && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setCartOpen(false)}>
           <div className="w-full bg-white dark:bg-slate-800 rounded-t-2xl p-5 max-h-[75vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
@@ -293,7 +293,7 @@ export default function GuestOrderPage() {
             </div>
 
             <div className="space-y-3 mb-4">
-              {cart.map((item) => (
+              {cart?.map((item) => (
                 <div key={item.producto_id} className="flex items-center justify-between">
                   <div className="flex-1 min-w-0 mr-2">
                     <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{item.nombre}</p>

@@ -232,7 +232,7 @@ export default function ReservacionesPage() {
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        {estados.map((e) => (
+        {estados?.map((e) => (
           <button
             key={e}
             onClick={() => setFiltro(e)}
@@ -370,7 +370,7 @@ export default function ReservacionesPage() {
                 <select className="input" value={editForm.habitacion_id}
                   onChange={(e) => setEditForm({...editForm, habitacion_id: Number(e.target.value) || '', cabaña_id: ''})}>
                   <option value="">Sin habitación</option>
-                  {habitaciones.map((h) => (
+                  {habitaciones?.map((h) => (
                     <option key={h.id} value={h.id}>
                       {h.numero} - {h.tipo} (S/.{Number(h.precio_noche).toFixed(2)})
                     </option>
@@ -382,7 +382,7 @@ export default function ReservacionesPage() {
                 <select className="input" value={editForm.cabaña_id}
                   onChange={(e) => setEditForm({...editForm, cabaña_id: Number(e.target.value) || '', habitacion_id: ''})}>
                   <option value="">Sin cabaña</option>
-                  {cabanias.map((c) => (
+                  {cabanias?.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.nombre} - Cap. {c.capacidad} (S/.{Number(c.precio_noche).toFixed(2)})
                     </option>

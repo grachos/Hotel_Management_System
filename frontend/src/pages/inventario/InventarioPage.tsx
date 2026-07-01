@@ -116,7 +116,7 @@ export default function InventarioPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Tiempo real en todos los módulos</p>
         </div>
         <div className="flex gap-3">
-          {stockBajo.length > 0 && (
+          {stockBajo?.length > 0 && (
             <button className="btn-danger relative">
               <AlertTriangle size={18} /> Stock Bajo
               <span className="ml-1 bg-white text-red-600 px-1.5 py-0.5 rounded-full text-xs font-bold">{stockBajo.length}</span>
@@ -149,9 +149,9 @@ export default function InventarioPage() {
       ) : (
         <Card>
           <div className="space-y-2">
-            {loading ? [1, 2, 3].map((i) => <div key={i} className="h-12 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />) :
-              movimientos.length === 0 ? <p className="text-sm text-slate-400 text-center py-8">Sin movimientos registrados</p> :
-              movimientos.slice(0, 50).map((m: any) => (
+            {loading ? [1, 2, 3]?.map((i) => <div key={i} className="h-12 bg-slate-100 dark:bg-slate-700 rounded animate-pulse" />) :
+              movimientos?.length === 0 ? <p className="text-sm text-slate-400 text-center py-8">Sin movimientos registrados</p> :
+              movimientos.slice(0, 50)?.map((m: any) => (
                 <div key={m.id} className="flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-colors">
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -179,7 +179,7 @@ export default function InventarioPage() {
               <label className="label">Categoría *</label>
               <select className="input" value={nuevoForm.categoria_id} onChange={(e) => setNuevoForm({...nuevoForm, categoria_id: e.target.value})}>
                 <option value="">Seleccionar</option>
-                {categorias.map((c) => <option key={c.id} value={c.id}>{c.nombre} ({c.modulo})</option>)}
+                {categorias?.map((c) => <option key={c.id} value={c.id}>{c.nombre} ({c.modulo})</option>)}
               </select>
             </div>
 
@@ -190,7 +190,7 @@ export default function InventarioPage() {
             <div>
               <label className="label">Unidad</label>
               <select className="input" value={nuevoForm.unidad} onChange={(e) => setNuevoForm({...nuevoForm, unidad: e.target.value})}>
-                {unidades.map((u) => <option key={u} value={u}>{u}</option>)}
+                {unidades?.map((u) => <option key={u} value={u}>{u}</option>)}
               </select>
             </div>
             <div>
