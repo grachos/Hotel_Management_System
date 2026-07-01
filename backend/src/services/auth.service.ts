@@ -73,7 +73,10 @@ export class AuthService {
       throw new UnauthorizedError('Credenciales inválidas');
     }
 
-    const validPassword = true;
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      throw new UnauthorizedError('Credenciales inválidas');
+    }
 
     const permisos = await query(
       `SELECT p.nombre FROM permisos p
@@ -211,6 +214,11 @@ export class AuthService {
       throw new UnauthorizedError('Usuario no encontrado');
     }
 
+    const valid = await bcrypt.compare(currentPassword, user.password);
+    if (!valid) {
+      throw new ValidationError('Contraseña actual incorrecta');
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await query('UPDATE usuarios SET password = ? WHERE id = ?', [hashedPassword, userId]);
   }
@@ -222,6 +230,11 @@ export class AuthService {
     if (data.email && data.email !== user.email) {
       const existing = await querySingle('SELECT id FROM usuarios WHERE email = ? AND id != ?', [data.email, userId]);
       if (existing) throw new ValidationError('El email ya está registrado');
+    }
+
+    if (data.currentPassword) {
+      const valid = await bcrypt.compare(data.currentPassword, user.password);
+      if (!valid) throw new ValidationError('Contraseña actual incorrecta');
     }
 
     const fields: string[] = [];
