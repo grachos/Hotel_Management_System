@@ -76,15 +76,26 @@ export class InventarioService {
     const producto = await querySingle('SELECT id FROM productos WHERE id = ?', [id]);
     if (!producto) throw new NotFoundError('Producto');
 
-    await query(
-      `UPDATE productos SET categoria_id = ?, proveedor_id = ?, nombre = ?, descripcion = ?,
-       sku = ?, unidad = ?, stock_actual = ?, stock_minimo = ?, precio_compra = ?,
-       precio_venta = ?, imagen = ?, visible = ? WHERE id = ?`,
-      [data.categoria_id, data.proveedor_id || null, data.nombre, data.descripcion || null,
-       data.sku || null, data.unidad, data.stock_actual, data.stock_minimo,
-       data.precio_compra, data.precio_venta, data.imagen || null,
-       data.visible !== undefined ? (data.visible ? 1 : 0) : 1, id]
-    );
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (data.categoria_id !== undefined) { fields.push('categoria_id = ?'); values.push(data.categoria_id); }
+    if (data.proveedor_id !== undefined) { fields.push('proveedor_id = ?'); values.push(data.proveedor_id || null); }
+    if (data.nombre !== undefined) { fields.push('nombre = ?'); values.push(data.nombre); }
+    if (data.descripcion !== undefined) { fields.push('descripcion = ?'); values.push(data.descripcion || null); }
+    if (data.sku !== undefined) { fields.push('sku = ?'); values.push(data.sku || null); }
+    if (data.unidad !== undefined) { fields.push('unidad = ?'); values.push(data.unidad); }
+    if (data.stock_actual !== undefined) { fields.push('stock_actual = ?'); values.push(data.stock_actual); }
+    if (data.stock_minimo !== undefined) { fields.push('stock_minimo = ?'); values.push(data.stock_minimo); }
+    if (data.precio_compra !== undefined) { fields.push('precio_compra = ?'); values.push(data.precio_compra); }
+    if (data.precio_venta !== undefined) { fields.push('precio_venta = ?'); values.push(data.precio_venta); }
+    if (data.imagen !== undefined) { fields.push('imagen = ?'); values.push(data.imagen || null); }
+    if (data.visible !== undefined) { fields.push('visible = ?'); values.push(data.visible ? 1 : 0); }
+
+    if (fields.length === 0) return producto;
+
+    values.push(id);
+    await query(`UPDATE productos SET ${fields.join(', ')} WHERE id = ?`, values);
 
     return this.obtenerProducto(id);
   }
