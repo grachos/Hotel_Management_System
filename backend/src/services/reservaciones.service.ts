@@ -114,7 +114,7 @@ export class ReservacionesService {
 
   async generarQR(id: number, baseUrl?: string): Promise<string> {
     const reservacion = await this.obtenerPorId(id);
-    const frontendUrl = baseUrl || 'http://localhost:5173';
+    const frontendUrl = baseUrl || 'https://gestionhotel.techcol-service.cc';
     const qrUrl = `${frontendUrl}/guest?token=${reservacion.codigo_unico}`;
 
     const qrCode = await QRCode.toDataURL(qrUrl, {
