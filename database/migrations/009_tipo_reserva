@@ -1,0 +1,1 @@
+ALTER TABLE reservaciones ADD COLUMN tipo VARCHAR(50) DEFAULT 'Pernocte' AFTER cabaña_id;
